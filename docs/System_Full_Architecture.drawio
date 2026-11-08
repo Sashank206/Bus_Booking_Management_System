@@ -1,0 +1,198 @@
+<mxfile host="app.diagrams.net" agent="ChatGPT">
+  <diagram id="full-system-architecture" name="Full System Architecture">
+    <mxGraphModel dx="1776" dy="1059" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" background="light-dark(#FFFFFF,#121212)" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="main_title" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=25;fontStyle=1;" value="BUS BOOKING MANAGEMENT SYSTEM — FULL SYSTEM ARCHITECTURE" vertex="1">
+          <mxGeometry height="42" width="1444" x="120" y="22" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#475569;" value="Role-based web application • React frontend • Node.js / Express backend • MongoDB Atlas • External verification and payment services" vertex="1">
+          <mxGeometry height="28" width="1384" x="150" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="presentation_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#2563EB;strokeWidth=2;arcSize=10;" value="" vertex="1">
+          <mxGeometry height="190" width="1574" x="55" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="presentation_head" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=17;fontStyle=1;fontColor=#1D4ED8;" value="1. PRESENTATION LAYER" vertex="1">
+          <mxGeometry height="30" width="500" x="80" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="customer_ui" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#60A5FA;strokeWidth=1.5;fontColor=#1E3A8A;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;Customer UI&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Search buses • Select seats&lt;br&gt;Book / cancel tickets • View PNR&lt;/font&gt;" vertex="1">
+          <mxGeometry height="85" width="350" x="105" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="operator_ui" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#60A5FA;strokeWidth=1.5;fontColor=#1E3A8A;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;Operator UI&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Manage buses • Routes • Trips&lt;br&gt;Schedules • Passenger manifest&lt;/font&gt;" vertex="1">
+          <mxGeometry height="85" width="350" x="665" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="admin_ui" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#60A5FA;strokeWidth=1.5;fontColor=#1E3A8A;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;Admin UI&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Manage users and operators&lt;br&gt;Monitor bookings • Reports&lt;/font&gt;" vertex="1">
+          <mxGeometry height="85" width="350" x="1225" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="frontend_stack" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BFDBFE;strokeColor=#3B82F6;fontColor=#1E3A8A;fontSize=13;align=center;verticalAlign=middle;" value="&lt;b&gt;FRONTEND TECHNOLOGY&lt;/b&gt;&lt;br&gt;React.js + Vite + Tailwind CSS + React Router • Role-based navigation" vertex="1">
+          <mxGeometry height="28" width="1000" x="340" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="application_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#16A34A;strokeWidth=2;arcSize=10;" value="" vertex="1">
+          <mxGeometry height="390" width="1574" x="55" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="application_head" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=17;fontStyle=1;fontColor=#166534;" value="2. APPLICATION LAYER" vertex="1">
+          <mxGeometry height="30" width="500" x="80" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="api_server" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBF7D0;strokeColor=#22C55E;strokeWidth=2;fontColor=#14532D;fontSize=16;align=center;verticalAlign=middle;spacing=6;" value="&lt;b&gt;NODE.JS + EXPRESS.JS REST API&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;HTTPS endpoints • Routing • Middleware • Request validation • Centralized error handling&lt;/font&gt;" vertex="1">
+          <mxGeometry height="58" width="1084" x="300" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="mod_auth" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#4ADE80;strokeWidth=1.5;fontColor=#14532D;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;AUTHENTICATION &amp;amp; RBAC&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Registration • Login • JWT&lt;br&gt;Email verification&amp;nbsp;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="78" width="335" x="95" y="465" as="geometry" />
+        </mxCell>
+        <mxCell id="mod_users" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#4ADE80;strokeWidth=1.5;fontColor=#14532D;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;USER &amp;amp; OPERATOR MANAGEMENT&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Profiles • Roles • Operator accounts&lt;br&gt;Account status and permissions&amp;nbsp;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Operator Registration , admin Approval&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="78" width="335" x="480" y="465" as="geometry" />
+        </mxCell>
+        <mxCell id="mod_bus" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#4ADE80;strokeWidth=1.5;fontColor=#14532D;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;BUS &amp; ROUTE MANAGEMENT&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px&#39;&gt;Bus details • Capacity • Stops&lt;br&gt;Source / destination / route&lt;/font&gt;" vertex="1">
+          <mxGeometry height="78" width="335" x="865" y="465" as="geometry" />
+        </mxCell>
+        <mxCell id="mod_trip" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#4ADE80;strokeWidth=1.5;fontColor=#14532D;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;TRIP &amp; SCHEDULE MANAGEMENT&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px&#39;&gt;Travel date • Departure / arrival&lt;br&gt;Fare • Trip availability&lt;/font&gt;" vertex="1">
+          <mxGeometry height="78" width="335" x="1250" y="465" as="geometry" />
+        </mxCell>
+        <mxCell id="mod_seat" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#4ADE80;strokeWidth=1.5;fontColor=#14532D;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;SEAT AVAILABILITY &amp; LOCKING&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px&#39;&gt;Seat map • Availability checks&lt;br&gt;Temporary lock • Expiry / release&lt;/font&gt;" vertex="1">
+          <mxGeometry height="78" width="335" x="95" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="mod_booking" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#4ADE80;strokeWidth=1.5;fontColor=#14532D;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;BOOKING &amp; PNR MANAGEMENT&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px&#39;&gt;Passenger details • Booking status&lt;br&gt;Unique PNR • E-ticket&lt;/font&gt;" vertex="1">
+          <mxGeometry height="78" width="335" x="480" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="mod_payment" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#4ADE80;strokeWidth=1.5;fontColor=#14532D;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;PAYMENT &amp;amp; CANCELLATION&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Payment Processing &amp;amp; Simulated Refund Status&lt;br&gt;Cancellation Policy • Cancellation Request • Refund Status.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="78" width="335" x="865" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="mod_reports" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#4ADE80;strokeWidth=1.5;fontColor=#14532D;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;REPORTS &amp; AUDIT LOGS&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px&#39;&gt;Booking / occupancy reports&lt;br&gt;Admin activity and event history&lt;/font&gt;" vertex="1">
+          <mxGeometry height="78" width="335" x="1250" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="data_access" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBF7D0;strokeColor=#4ADE80;fontColor=#14532D;fontSize=12;align=center;verticalAlign=middle;" value="Mongoose ODM • Models • Business rules • Database transactions / atomic updates" vertex="1">
+          <mxGeometry height="30" width="1084" x="300" y="665" as="geometry" />
+        </mxCell>
+        <mxCell id="data_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAF5FF;strokeColor=#9333EA;strokeWidth=2;arcSize=10;" value="" vertex="1">
+          <mxGeometry height="225" width="1020" x="55" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="data_head" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=17;fontStyle=1;fontColor=#6B21A8;" value="3. DATA LAYER" vertex="1">
+          <mxGeometry height="30" width="400" x="80" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="mongo" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DDD6FE;strokeColor=#8B5CF6;strokeWidth=2;fontColor=#4C1D95;fontSize=16;align=center;verticalAlign=middle;" value="&lt;b&gt;MongoDB Atlas&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Persistent document database&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="390" x="370" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="collection_0" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#A78BFA;strokeWidth=1.5;fontColor=#4C1D95;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="Users / Operators" vertex="1">
+          <mxGeometry height="30" width="210" x="90" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="collection_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#A78BFA;strokeWidth=1.5;fontColor=#4C1D95;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="Buses / Routes" vertex="1">
+          <mxGeometry height="30" width="210" x="330" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="collection_2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#A78BFA;strokeWidth=1.5;fontColor=#4C1D95;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="Trips / Schedules" vertex="1">
+          <mxGeometry height="30" width="210" x="570" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="collection_3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#A78BFA;strokeWidth=1.5;fontColor=#4C1D95;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="Seat Inventory" vertex="1">
+          <mxGeometry height="30" width="210" x="810" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="collection_4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#A78BFA;strokeWidth=1.5;fontColor=#4C1D95;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="Bookings / Passengers" vertex="1">
+          <mxGeometry height="30" width="210" x="90" y="922" as="geometry" />
+        </mxCell>
+        <mxCell id="collection_5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#A78BFA;strokeWidth=1.5;fontColor=#4C1D95;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="Payments / Refunds" vertex="1">
+          <mxGeometry height="30" width="210" x="330" y="922" as="geometry" />
+        </mxCell>
+        <mxCell id="collection_6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#A78BFA;strokeWidth=1.5;fontColor=#4C1D95;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="Notifications" vertex="1">
+          <mxGeometry height="30" width="210" x="570" y="922" as="geometry" />
+        </mxCell>
+        <mxCell id="collection_7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#A78BFA;strokeWidth=1.5;fontColor=#4C1D95;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="Audit Logs" vertex="1">
+          <mxGeometry height="30" width="210" x="810" y="922" as="geometry" />
+        </mxCell>
+        <mxCell id="external_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#64748B;strokeWidth=2;arcSize=10;" value="" vertex="1">
+          <mxGeometry height="225" width="529" x="1100" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="external_head" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontStyle=1;fontColor=#334155;" value="4. EXTERNAL SERVICES" vertex="1">
+          <mxGeometry height="30" width="450" x="1125" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="email_service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2E8F0;strokeColor=#94A3B8;strokeWidth=1.5;fontColor=#334155;fontSize=13;align=center;verticalAlign=middle;spacing=7;" value="&lt;b&gt;EMAIL SERVICE&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px&#39;&gt;Nodemailer / Gmail SMTP&lt;br&gt;Verification links or OTP • Booking email&lt;/font&gt;" vertex="1">
+          <mxGeometry height="65" width="220" x="1270" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="gateway" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#8B5CF6;strokeWidth=1.5;fontColor=#4C1D95;fontSize=13;align=center;verticalAlign=middle;spacing=6;" value="&lt;b&gt;PAYMENT GATEWAY&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px&#39;&gt;Gateway test mode&lt;br&gt;Payment processing • Refund API&lt;/font&gt;" vertex="1">
+          <mxGeometry height="65" width="220" x="1255" y="890" as="geometry" />
+        </mxCell>
+        <mxCell id="security_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#D97706;strokeWidth=2;arcSize=10;" value="" vertex="1">
+          <mxGeometry height="125" width="1574" x="55" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="security_head" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontStyle=1;fontColor=#92400E;" value="5. SECURITY &amp; QUALITY — CROSS-CUTTING CONCERNS" vertex="1">
+          <mxGeometry height="28" width="900" x="80" y="1008" as="geometry" />
+        </mxCell>
+        <mxCell id="sec_0" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#FBBF24;strokeWidth=1.5;fontColor=#78350F;fontSize=12;align=center;verticalAlign=middle;spacing=6;" value="JWT authentication&lt;br&gt;Role-based access control" vertex="1">
+          <mxGeometry height="58" width="195" x="80" y="1050" as="geometry" />
+        </mxCell>
+        <mxCell id="sec_1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#FBBF24;strokeWidth=1.5;fontColor=#78350F;fontSize=12;align=center;verticalAlign=middle;spacing=6;" value="bcrypt password hashing&lt;br&gt;Secure secrets / HTTPS" vertex="1">
+          <mxGeometry height="58" width="195" x="315" y="1050" as="geometry" />
+        </mxCell>
+        <mxCell id="sec_2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#FBBF24;strokeWidth=1.5;fontColor=#78350F;fontSize=12;align=center;verticalAlign=middle;spacing=6;" value="Email&amp;nbsp;&lt;br&gt;Expiry • Rate limiting" vertex="1">
+          <mxGeometry height="58" width="195" x="550" y="1050" as="geometry" />
+        </mxCell>
+        <mxCell id="sec_4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#FBBF24;strokeWidth=1.5;fontColor=#78350F;fontSize=12;align=center;verticalAlign=middle;spacing=6;" value="Atomic seat locking&lt;br&gt;Hold expiry • Idempotency" vertex="1">
+          <mxGeometry height="58" width="195" x="817.5" y="1050" as="geometry" />
+        </mxCell>
+        <mxCell id="sec_5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#FBBF24;strokeWidth=1.5;fontColor=#78350F;fontSize=12;align=center;verticalAlign=middle;spacing=6;" value="Input validation&lt;br&gt;Error handling • Testing" vertex="1">
+          <mxGeometry height="58" width="195" x="1110" y="1050" as="geometry" />
+        </mxCell>
+        <mxCell id="sec_6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#FBBF24;strokeWidth=1.5;fontColor=#78350F;fontSize=12;align=center;verticalAlign=middle;spacing=6;" value="Audit logging&lt;br&gt;Backup • Monitoring" vertex="1">
+          <mxGeometry height="58" width="195" x="1388" y="1050" as="geometry" />
+        </mxCell>
+        <mxCell id="e_customer_api" edge="1" parent="1" source="customer_ui" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;strokeWidth=2;endArrow=block;endFill=1;" target="api_server" value="HTTPS / REST / JSON">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_operator_api" edge="1" parent="1" source="operator_ui" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;strokeWidth=2;endArrow=block;endFill=1;" target="api_server" value="HTTPS / REST / JSON">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_admin_api" edge="1" parent="1" source="admin_ui" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;strokeWidth=2;endArrow=block;endFill=1;" target="api_server" value="HTTPS / REST / JSON">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_api_mongo" edge="1" parent="1" source="data_access" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7E22CE;strokeWidth=2;endArrow=block;endFill=1;" target="mongo" value="Mongoose operations">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_auth_email" edge="1" parent="1" source="mod_auth" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748B;strokeWidth=2;endArrow=block;endFill=1;dashed=1;dashPattern=6 4;" target="email_service" value="Email verification">
+          <mxGeometry relative="1" x="0.165" y="24" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1380" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_payment_gateway" edge="1" parent="1" source="mod_payment" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7E22CE;strokeWidth=2;endArrow=block;endFill=1;" target="gateway" value="Payment / refund API">
+          <mxGeometry relative="1" x="0.0198" as="geometry">
+            <Array as="points">
+              <mxPoint x="1365" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_gateway_webhook" edge="1" parent="1" source="gateway" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7E22CE;strokeWidth=2;endArrow=block;endFill=1;dashed=1;dashPattern=6 4;" target="mod_payment" value="Verified webhook / result">
+          <mxGeometry relative="1" x="-0.5775" y="-12" as="geometry">
+            <mxPoint y="-1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_booking_seat" edge="1" parent="1" source="mod_booking" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;strokeWidth=2;endArrow=block;endFill=1;" target="mod_seat" value="Reserve / confirm seats">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_seat_inventory" edge="1" parent="1" source="mod_seat" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7E22CE;strokeWidth=2;endArrow=block;endFill=1;" target="mongo" value="Atomic lock / release">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_booking_db" edge="1" parent="1" source="mod_booking" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7E22CE;strokeWidth=2;endArrow=block;endFill=1;" target="mongo" value="Persist booking / PNR">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_trip_db" edge="1" parent="1" source="mod_trip" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7E22CE;strokeWidth=2;endArrow=block;endFill=1;" target="mongo" value="Read trip availability">
+          <mxGeometry relative="1" x="-0.103" y="-4" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="565" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_email_booking" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748B;strokeWidth=2;endArrow=block;endFill=1;dashed=1;dashPattern=6 4;" value="Booking / cancellation email">
+          <mxGeometry relative="1" x="0.0751" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="819" y="599.9999999999998" as="sourcePoint" />
+            <mxPoint x="1384" y="781" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#334155;" value="&lt;b&gt;LEGEND&lt;/b&gt; &amp;nbsp; Blue = Presentation &amp;nbsp; Green = Application &amp;nbsp; Purple = Database &amp;nbsp; Grey = External services &amp;nbsp; Yellow = Security / Quality &amp;nbsp; Solid arrows = API / data flow &amp;nbsp; Dashed arrows = External integration / callback" vertex="1">
+          <mxGeometry height="30" width="1510" x="85" y="1140" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

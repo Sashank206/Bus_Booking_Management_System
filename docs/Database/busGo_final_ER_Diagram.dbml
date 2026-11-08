@@ -1,0 +1,377 @@
+
+Project BusGo {
+  Note: 'Bus Booking Management System - Logical Database Design'
+}
+
+// ENUMS
+
+Enum user_role {
+  customer
+  operator
+  admin
+}
+
+Enum account_status {
+  pending
+  active
+  suspended
+  rejected
+}
+
+Enum operator_status {
+  pending
+  approved
+  rejected
+  suspended
+}
+
+Enum trip_status {
+  scheduled
+  boarding
+  in_progress
+  completed
+  cancelled
+}
+
+Enum seat_allocation_status {
+  held
+  confirmed
+  released
+  expired
+  cancelled
+}
+
+Enum booking_status {
+  pending_payment
+  confirmed
+  partially_cancelled
+  cancelled
+  expired
+  failed
+}
+
+Enum payment_status {
+  pending
+  successful
+  failed
+}
+
+Enum cancellation_status {
+  requested
+  approved
+  processed
+  rejected
+}
+
+Enum refund_status {
+  pending
+  processing
+  completed
+  failed
+}
+
+
+// 1. USER AND OPERATOR MANAGEMENT
+
+Table Users {
+  _id ObjectId [pk]
+  name varchar [not null]
+  email varchar [unique, not null]
+  passwordHash varchar [not null]
+  phone varchar
+  role user_role [not null]
+  accountStatus account_status
+  emailVerified boolean
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Operators {
+  _id ObjectId [pk]
+  userId ObjectId [unique, not null]
+  companyName varchar [not null]
+  registrationNumber varchar
+  contactPerson varchar
+  businessAddress varchar
+  approvalStatus operator_status
+  approvedBy ObjectId
+  approvedAt timestamp
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+// 2. BUS AND ROUTE MANAGEMENT
+
+Table Buses {
+  _id ObjectId [pk]
+  operatorId ObjectId [not null]
+  busNumber varchar
+  busName varchar
+  busType varchar
+  registrationNumber varchar [unique]
+  totalSeats int
+  seatLayout json
+  amenities json
+  isActive boolean
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Stops {
+  _id ObjectId [pk]
+  stopName varchar [not null]
+  city varchar [not null]
+  state varchar
+  address varchar
+  latitude decimal
+  longitude decimal
+  isActive boolean
+}
+
+Table Routes {
+  _id ObjectId [pk]
+  routeName varchar
+  sourceStopId ObjectId
+  destinationStopId ObjectId
+  distanceKm decimal
+  estimatedDurationMinutes int
+  isActive boolean
+  createdAt timestamp
+}
+
+Table RouteStops {
+  _id ObjectId [pk]
+  routeId ObjectId [not null]
+  stopId ObjectId [not null]
+  stopSequence int [not null]
+  distanceFromStart decimal
+  indexes {
+  (routeId, stopSequence) [unique]
+}
+}
+
+// 3. TRIP AND SEAT MANAGEMENT
+
+Table Trips {
+  _id ObjectId [pk]
+  busId ObjectId [not null]
+  operatorId ObjectId [not null]
+  routeId ObjectId [not null]
+  travelDate date
+  departureTime timestamp
+  arrivalTime timestamp
+  baseFare decimal
+  tripStatus trip_status
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table TripStops {
+  _id ObjectId [pk]
+  tripId ObjectId [not null]
+  stopId ObjectId [not null]
+  stopSequence int [not null]
+  arrivalTime timestamp
+  departureTime timestamp
+  indexes {
+  (tripId, stopSequence) [unique]
+  }
+}
+
+Table SeatInventory {
+  _id ObjectId [pk]
+  tripId ObjectId [not null]
+  seatNumber varchar [not null]
+  seatType varchar
+  isActive boolean
+  activeSegments json
+  updatedAt timestamp
+
+  indexes {
+    (tripId, seatNumber) [unique]
+  }
+}
+
+// 4. BOOKING AND PASSENGER MANAGEMENT
+
+Table Bookings {
+  _id ObjectId [pk]
+  pnr varchar [unique, not null]
+  userId ObjectId [not null]
+  tripId ObjectId [not null]
+  bookingStatus booking_status
+  totalAmount decimal
+  bookingDate timestamp
+  confirmedAt timestamp
+  cancelledAt timestamp
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Passengers {
+  _id ObjectId [pk]
+  bookingId ObjectId [not null]
+  fullName varchar [not null]
+  age int
+  gender varchar
+  phone varchar
+  email varchar
+  createdAt timestamp
+}
+
+Table BookingSeats {
+  _id ObjectId [pk]
+  bookingId ObjectId [not null]
+  passengerId ObjectId [not null]
+  seatInventoryId ObjectId [not null]
+  boardingStopId ObjectId [not null]
+  droppingStopId ObjectId [not null]
+  fromSequence int [not null]
+  toSequence int [not null]
+  seatNumber varchar [not null]
+  segmentFare decimal
+  allocationStatus seat_allocation_status
+  holdExpiresAt timestamp
+  confirmedAt timestamp
+  cancelledAt timestamp
+  createdAt timestamp
+  indexes {
+  (bookingId)
+  (seatInventoryId, allocationStatus)
+  }
+}
+
+// 5. PAYMENT MANAGEMENT
+
+Table Payments {
+  _id ObjectId [pk]
+  bookingId ObjectId [not null]
+  paymentReference varchar
+  idempotencyKey varchar
+  paymentMethod varchar
+  paymentAmount decimal
+  paymentStatus payment_status
+  provider varchar
+  paidAt timestamp
+  createdAt timestamp
+}
+
+// 6. CANCELLATION AND REFUND MANAGEMENT
+
+Table Cancellations {
+  _id ObjectId [pk]
+  bookingId ObjectId [not null]
+  requestedBy ObjectId
+  cancellationStatus cancellation_status
+  cancellationReason varchar
+  policySnapshot json
+  totalCancellationCharge decimal
+  totalRefundAmount decimal
+  requestedAt timestamp
+  processedAt timestamp
+}
+
+Table CancellationItems {
+  _id ObjectId [pk]
+  cancellationId ObjectId [not null]
+  bookingSeatId ObjectId [not null]
+  cancellationCharge decimal
+  refundAmount decimal
+  createdAt timestamp
+  indexes {
+  (cancellationId, bookingSeatId) [unique]
+  }
+}
+
+Table Refunds {
+  _id ObjectId [pk]
+  cancellationId ObjectId [not null]
+  paymentId ObjectId [not null]
+  refundReference varchar
+  refundAmount decimal
+  refundStatus refund_status
+  provider varchar
+  processedAt timestamp
+  createdAt timestamp
+}
+
+// 7. NOTIFICATIONS AND AUDIT LOGS
+
+Table Notifications {
+  _id ObjectId [pk]
+  userId ObjectId [not null]
+  bookingId ObjectId
+  notificationType varchar
+  message varchar
+  deliveryStatus varchar
+  sentAt timestamp
+  createdAt timestamp
+}
+
+Table AuditLogs {
+  _id ObjectId [pk]
+  userId ObjectId
+  action varchar
+  entityType varchar
+  entityId ObjectId
+  description varchar
+  createdAt timestamp
+}
+
+// RELATIONSHIPS
+
+// User and operator relationships
+Ref: Operators.userId - Users._id
+Ref: Operators.approvedBy > Users._id
+
+// Bus and route relationships
+Ref: Buses.operatorId > Operators._id
+
+Ref: Routes.sourceStopId > Stops._id
+Ref: Routes.destinationStopId > Stops._id
+
+Ref: RouteStops.routeId > Routes._id
+Ref: RouteStops.stopId > Stops._id
+
+// Trip relationships
+Ref: Trips.busId > Buses._id
+Ref: Trips.operatorId > Operators._id
+Ref: Trips.routeId > Routes._id
+
+Ref: TripStops.tripId > Trips._id
+Ref: TripStops.stopId > Stops._id
+
+// Seat inventory relationships
+Ref: SeatInventory.tripId > Trips._id
+
+// Booking relationships
+Ref: Bookings.userId > Users._id
+Ref: Bookings.tripId > Trips._id
+
+Ref: Passengers.bookingId > Bookings._id
+
+Ref: BookingSeats.bookingId > Bookings._id
+Ref: BookingSeats.passengerId > Passengers._id
+Ref: BookingSeats.seatInventoryId > SeatInventory._id
+Ref: BookingSeats.boardingStopId > Stops._id
+Ref: BookingSeats.droppingStopId > Stops._id
+
+// Payment relationships
+Ref: Payments.bookingId > Bookings._id
+
+// Cancellation relationships
+Ref: Cancellations.bookingId > Bookings._id
+Ref: Cancellations.requestedBy > Users._id
+
+Ref: CancellationItems.cancellationId > Cancellations._id
+Ref: CancellationItems.bookingSeatId > BookingSeats._id
+
+// Refund relationships
+Ref: Refunds.cancellationId > Cancellations._id
+Ref: Refunds.paymentId > Payments._id
+
+// Notification and audit relationships
+Ref: Notifications.userId > Users._id
+Ref: Notifications.bookingId > Bookings._id
+
+Ref: AuditLogs.userId > Users._id
