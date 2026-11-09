@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "node tests/health-check.test.js",
+    "test": "node tests/phase3-models-auth.test.js",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },

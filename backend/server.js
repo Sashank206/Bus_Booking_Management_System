@@ -5,8 +5,15 @@ const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
 
-// Load environment variables
+// Load environment variables before any module configuration
 dotenv.config();
+
+const { connectDB } = require('./config/db');
+const errorHandler = require('./middleware/errorHandler');
+const AppError = require('./utils/appError');
+
+// Route imports
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,10 +37,10 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// General rate limiter with resilient key generation
+// General API rate limiter with resilient key generation
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // Limit each IP to 200 requests per window
+  max: 300, // 300 requests per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
@@ -55,7 +62,8 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     documentation: '/api/docs',
     endpoints: {
-      health: '/api/health'
+      health: '/api/health',
+      auth: '/api/auth'
     }
   });
 });
@@ -71,37 +79,25 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// API Routes
+app.use('/api/auth', authRoutes);
+
 // 404 handler for unmatched routes
 app.use((req, res, next) => {
-  res.status(404).json({
-    status: 'fail',
-    message: `Resource not found: ${req.method} ${req.originalUrl}`
-  });
+  next(new AppError(`Resource not found: ${req.method} ${req.originalUrl}`, 404));
 });
 
 // Centralized error handling middleware
-app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  const isProduction = process.env.NODE_ENV === 'production';
+app.use(errorHandler);
 
-  console.error(`[Error] ${err.name || 'Error'}: ${err.message}`);
-  if (!isProduction && err.stack) {
-    console.error(err.stack);
-  }
-
-  res.status(statusCode).json({
-    status: statusCode >= 500 ? 'error' : 'fail',
-    message: err.message || 'An unexpected internal server error occurred.',
-    ...(isProduction ? {} : { stack: err.stack })
-  });
-});
-
-// Start server if run directly
+// Start server and initialize database if run directly
 let server;
 if (require.main === module) {
-  server = app.listen(PORT, () => {
-    console.log(`[BusGo] Backend server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-    console.log(`[BusGo] Health check accessible at: http://localhost:${PORT}/api/health`);
+  connectDB().then(() => {
+    server = app.listen(PORT, () => {
+      console.log(`[BusGo] Backend server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+      console.log(`[BusGo] Health check accessible at: http://localhost:${PORT}/api/health`);
+    });
   });
 }
 
