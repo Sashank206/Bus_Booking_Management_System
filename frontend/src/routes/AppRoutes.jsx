@@ -61,6 +61,7 @@ export default function AppRoutes() {
       >
         <Route index element={<Navigate to="/customer/dashboard" replace />} />
         <Route path="dashboard" element={<CustomerDashboardPage />} />
+        <Route path="bookings" element={<CustomerDashboardPage />} />
         <Route path="profile" element={<CustomerProfilePage />} />
       </Route>
 

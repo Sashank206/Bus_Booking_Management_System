@@ -20,6 +20,7 @@ const busRoutes = require('./routes/busRoutes');
 const stopRoutes = require('./routes/stopRoutes');
 const routeRoutes = require('./routes/routeRoutes');
 const tripRoutes = require('./routes/tripRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -109,6 +110,7 @@ app.use('/api/buses', busRoutes);
 app.use('/api/stops', stopRoutes);
 app.use('/api/routes', routeRoutes);
 app.use('/api/trips', tripRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // 404 handler for unmatched routes
 app.use((req, res, next) => {

@@ -190,3 +190,63 @@ Base URL (Development): `http://localhost:5000/api`
   - Cancels scheduled trip, sets `tripStatus: 'cancelled'`, closes seat inventory, and records `TRIP_CANCELLED` audit log.
 - `GET /api/trips/:tripId/manifest` *(Protected: Operator owner / Admin)*
   - Generates comprehensive passenger manifest detailing all reserved seats, passenger names, age, gender, contact numbers, PNR codes, boarding stops, dropping stops, sequence intervals `[fromSequence, toSequence)`, and collected segment fares.
+
+---
+
+### 3.9 Customer Search & Seat Availability (`/api/trips`)
+- `GET /api/trips/search?origin=...&destination=...&date=...&busType=...&operatorId=...&minFare=...&maxFare=...&sortBy=...&page=...&limit=...`
+  - Public search engine matching scheduled journeys that include both origin and destination stops in strictly forward sequence (`fromSequence < toSequence`).
+  - Supports resolution by stop ObjectId or case-insensitive city/stop name queries.
+  - Returns calculated segment duration, calculated segment fare proportional to distance ratio, bus operator profile with rating, vehicle specifications, and total unallocated seats for the requested segment `[fromSequence, toSequence)`.
+- `GET /api/trips/:tripId/seats?fromStopId=...&toStopId=...`
+  - Returns complete vehicle cabin seating layout (decks, rows, columns, sleeper vs seater attributes).
+  - Calculates real-time segment availability for each individual seat using half-open intervals `[fromSequence, toSequence)`.
+  - Non-overlapping occupied segments on the same physical vehicle remain completely available for booking.
+  - Dynamically evaluates hold expiry (`status === 'held' && holdExpiresAt <= now`), preventing expired holds from blocking seats.
+
+---
+
+### 3.10 Seat Holds & Booking Workflow (`/api/bookings`)
+- `POST /api/bookings/hold` *(Protected: Customer / Admin)*
+  - Acquires atomic 10-minute hold on 1 to 6 selected seats.
+  - Body:
+    ```json
+    {
+      "tripId": "67...",
+      "seatNumbers": ["1A", "1B"],
+      "boardingStopId": "67...",
+      "droppingStopId": "67..."
+    }
+    ```
+  - Response returns `holdToken`, `holdExpiresAt` (now + 10 mins), calculated `seatFare`, and `totalAmount`.
+  - Concurrency & Rollback: Employs all-or-nothing rollback. If any seat in a multi-seat request is blocked or concurrently acquired by another user, all acquired holds in that request are released and returns 409 Conflict.
+- `POST /api/bookings/release-hold` *(Public / Customer)*
+  - Explicitly releases temporary holds when customer deselects seats or abandons booking.
+  - Body: `{ tripId, seatNumbers, holdToken }`
+- `POST /api/bookings` *(Protected: Customer / Admin)*
+  - Creates booking record with cryptographically generated unique PNR (matching `/^[A-Z0-9]{6,12}$/`).
+  - Body:
+    ```json
+    {
+      "tripId": "67...",
+      "boardingStopId": "67...",
+      "droppingStopId": "67...",
+      "holdToken": "HT_...",
+      "passengers": [
+        {
+          "fullName": "Rohan Sharma",
+          "age": 28,
+          "gender": "male",
+          "seatNumber": "1A",
+          "phone": "9876543210",
+          "email": "rohan@example.com"
+        }
+      ]
+    }
+    ```
+  - Multi-Document Consistency: Creates `Booking` (`pending_payment`), individual `Passenger` records, `BookingSeat` segment allocations (`held`), pending `Payment` with idempotency key, and records `BOOKING_CREATED` audit log. On failure, triggers compensational rollback.
+- `GET /api/bookings/my-bookings?page=...&limit=...&status=...` *(Protected: Customer)*
+  - Lists historical and active bookings exclusively for the authenticated user, populated with passenger rosters, bus details, and allocated seat numbers.
+- `GET /api/bookings/:bookingId` *(Protected: Customer owner / Admin)*
+  - Detailed booking retrieval by MongoDB ObjectId or PNR. Enforces strict customer ownership isolation (Customer A cannot access Customer B's booking). Admin retains platform-wide verification access.
+

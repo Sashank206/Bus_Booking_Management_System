@@ -1,6 +1,8 @@
 const express = require('express');
 const {
   getTrips,
+  searchTrips,
+  getTripSeatAvailability,
   getTripById,
   createTrip,
   cancelTrip,
@@ -15,6 +17,10 @@ const {
 const { tripValidation } = require('../validators/tripValidator');
 
 const router = express.Router();
+
+// Public Trip Search & Seat Availability
+router.get('/search', searchTrips);
+router.get('/:tripId/seats', getTripSeatAvailability);
 
 // Public / Operator trip listing
 router.get('/', optionalProtect, getTrips);
