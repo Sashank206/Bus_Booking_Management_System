@@ -14,10 +14,21 @@ const AppError = require('./utils/appError');
 
 // Route imports
 const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const operatorRoutes = require('./routes/operatorRoutes');
+const busRoutes = require('./routes/busRoutes');
+const stopRoutes = require('./routes/stopRoutes');
+const routeRoutes = require('./routes/routeRoutes');
+const tripRoutes = require('./routes/tripRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+const allowedOrigins = Array.from(new Set([
+  CLIENT_URL,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
+]));
 
 // Security headers
 app.use(helmet());
@@ -25,7 +36,12 @@ app.use(helmet());
 // CORS configuration for cross-origin requests from the React frontend
 app.use(
   cors({
-    origin: CLIENT_URL,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Idempotency-Key']
@@ -63,7 +79,13 @@ app.get('/', (req, res) => {
     documentation: '/api/docs',
     endpoints: {
       health: '/api/health',
-      auth: '/api/auth'
+      auth: '/api/auth',
+      admin: '/api/admin',
+      operator: '/api/operator',
+      buses: '/api/buses',
+      stops: '/api/stops',
+      routes: '/api/routes',
+      trips: '/api/trips'
     }
   });
 });
@@ -81,6 +103,12 @@ app.get('/api/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/operator', operatorRoutes);
+app.use('/api/buses', busRoutes);
+app.use('/api/stops', stopRoutes);
+app.use('/api/routes', routeRoutes);
+app.use('/api/trips', tripRoutes);
 
 // 404 handler for unmatched routes
 app.use((req, res, next) => {

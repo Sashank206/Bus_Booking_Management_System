@@ -17,7 +17,7 @@ const protect = asyncHandler(async (req, res, next) => {
     token = req.cookies.token;
   }
 
-  if (!token) {
+  if (!token || token === 'none' || token === 'null' || token === 'undefined') {
     return next(new AppError('Authentication required. Please log in to proceed.', 401));
   }
 
@@ -56,6 +56,39 @@ const protect = asyncHandler(async (req, res, next) => {
   if (currentUser.role === 'operator') {
     const operator = await Operator.findOne({ userId: currentUser._id });
     req.operator = operator || null;
+  }
+
+  next();
+});
+
+/**
+ * Optional authentication middleware:
+ * Attaches user and operator profile if a valid token is present, but does not block unauthenticated requests.
+ */
+const optionalProtect = asyncHandler(async (req, res, next) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  }
+
+  if (!token || token === 'none' || token === 'null' || token === 'undefined') {
+    return next();
+  }
+
+  try {
+    const decoded = verifyToken(token);
+    const currentUser = await User.findById(decoded.id);
+    if (currentUser && currentUser.accountStatus === 'active') {
+      req.user = currentUser;
+      if (currentUser.role === 'operator') {
+        const operator = await Operator.findOne({ userId: currentUser._id });
+        req.operator = operator || null;
+      }
+    }
+  } catch (err) {
+    // Proceed as unauthenticated guest on invalid/expired token
   }
 
   next();
@@ -137,6 +170,7 @@ const verifyOperatorOwnership = (resourceOperatorId, req) => {
 
 module.exports = {
   protect,
+  optionalProtect,
   authorize,
   requireApprovedOperator,
   verifyOperatorOwnership

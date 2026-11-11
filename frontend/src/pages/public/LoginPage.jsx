@@ -33,15 +33,30 @@ export default function LoginPage() {
       const data = await login(email, password);
       toast.success(`Welcome back, ${data.user.name}!`);
 
+      const role = data.user.role;
+      const defaultPath =
+        role === 'admin'
+          ? '/admin/dashboard'
+          : role === 'operator'
+          ? '/operator/dashboard'
+          : '/customer/dashboard';
+
+      let targetPath = defaultPath;
       if (redirectPath) {
-        navigate(redirectPath, { replace: true });
-      } else if (data.user.role === 'admin') {
-        navigate('/admin/dashboard', { replace: true });
-      } else if (data.user.role === 'operator') {
-        navigate('/operator/dashboard', { replace: true });
-      } else {
-        navigate('/customer/dashboard', { replace: true });
+        const isAdminRoute = redirectPath.startsWith('/admin');
+        const isOperatorRoute = redirectPath.startsWith('/operator');
+        const isCustomerRoute = redirectPath.startsWith('/customer');
+
+        if (isAdminRoute && role === 'admin') {
+          targetPath = redirectPath;
+        } else if (isOperatorRoute && (role === 'operator' || role === 'admin')) {
+          targetPath = redirectPath;
+        } else if (isCustomerRoute && (role === 'customer' || role === 'admin')) {
+          targetPath = redirectPath;
+        }
       }
+
+      navigate(targetPath, { replace: true });
     } catch (err) {
       const msg = err.message || 'Login failed. Please verify credentials.';
       setError(msg);

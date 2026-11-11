@@ -172,9 +172,11 @@ const login = asyncHandler(async (req, res, next) => {
  * POST /api/auth/logout
  */
 const logout = asyncHandler(async (req, res, next) => {
-  res.cookie('token', 'none', {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'strict' : 'lax'
   });
 
   res.status(200).json({

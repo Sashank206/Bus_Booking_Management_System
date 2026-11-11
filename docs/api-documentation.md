@@ -1,75 +1,192 @@
 # BusGo API Documentation
 
 ## 1. Overview
-The BusGo API is a RESTful API built on Express 5. All endpoints communicate using standard JSON payloads, status codes, and centralized error responses.
+The BusGo API is a RESTful API built on Express 5. All endpoints communicate using standard JSON payloads, HTTP status codes, and centralized error responses.
 
 Base URL (Development): `http://localhost:5000/api`
 
 ## 2. Standard Response Structure
-Successful responses adhere to:
+
+### 2.1 Successful Response
 ```json
 {
   "status": "success",
+  "message": "Optional descriptive status message",
   "data": { ... }
 }
 ```
 
-Error responses adhere to:
+### 2.2 Error Response
 ```json
 {
   "status": "fail" | "error",
   "message": "Human-readable error explanation",
-  "errors": [ ... ]
+  "errors": {
+    "field": "Specific validation failure description"
+  }
 }
 ```
 
-## 3. Core Planned Endpoints
+---
 
-### 3.1 Health & System
-- `GET /api/health` - Server connectivity and uptime verification.
+## 3. Implemented API Endpoints
 
-### 3.2 Authentication & Profile
-- `POST /api/auth/register` - Customer registration.
-- `POST /api/auth/operator-register` - Operator business registration.
-- `POST /api/auth/login` - Secure login (JWT in HTTP-only cookie or Bearer token).
-- `POST /api/auth/logout` - Invalidate session / clear token cookie.
-- `GET /api/auth/me` - Authenticated user identity and active role profile.
+### 3.1 Health & Service Inspection
+- `GET /` — Service identity and route registry summary.
+- `GET /api/health` — System uptime, environment, and connectivity status.
 
-### 3.3 Trips & Segment Seat Search
-- `GET /api/trips/search?from=StopA&to=StopB&date=YYYY-MM-DD` - Search available trips for given segment.
-- `GET /api/trips/:tripId` - Trip schedule, route stops, and timing.
-- `GET /api/trips/:tripId/seats?fromStopId=...&toStopId=...` - Segment-based seat availability map.
+---
 
-### 3.4 Booking & Atomic Holds
-- `POST /api/bookings/holds` - Acquire atomic 10-minute temporary seat hold.
-- `POST /api/bookings` - Create pending booking with passenger information and unique PNR.
-- `GET /api/bookings/my-bookings` - Customer booking history.
-- `GET /api/bookings/:bookingId` - Detailed booking view.
-- `GET /api/bookings/:bookingId/ticket` - Printable / exportable ticket.
+### 3.2 Authentication & Session Lifecycle (`/api/auth`)
+- `POST /api/auth/register` — Customer account registration.
+  - Body: `{ name, email, password, phone }`
+- `POST /api/auth/operator-register` — Transport operator registration.
+  - Body: `{ name, email, password, phone, companyName, registrationNumber, contactPerson, address }`
+- `POST /api/auth/login` — Account authentication (JWT issued in HTTP-only cookie and JSON payload).
+  - Body: `{ email, password }`
+- `POST /api/auth/logout` — Session termination and HTTP-only cookie clearance.
+- `GET /api/auth/me` — Authenticated session restore and profile lookup.
+- `PUT /api/auth/profile` — User profile update (name, phone).
 
-### 3.5 Simulated Payments
-- `POST /api/payments/simulate` - Simulated payment execution with idempotency key.
-- `GET /api/payments/:paymentId` - Payment receipt and status.
+---
 
-### 3.6 Partial Cancellations & Refunds
-- `POST /api/bookings/:bookingId/cancellations` - Partial passenger/seat cancellation request.
-- `GET /api/bookings/:bookingId/cancellations` - Booking cancellation log and policy snapshot.
-- `GET /api/cancellations/:cancellationId/refunds` - Refund calculation and simulated processing status.
+### 3.3 Platform Administration (`/api/admin`)
+*(Protected: Requires authenticated user with `admin` role)*
 
-### 3.7 Operator Portal Endpoints
-- `GET /api/operator/dashboard` - Metrics (fleet size, trips, occupancy rate, simulated revenue).
-- `GET /api/operator/buses` - List operator fleet.
-- `POST /api/operator/buses` - Create and configure bus seat layout.
-- `GET /api/operator/trips` - Operator scheduled trips.
-- `POST /api/operator/trips` - Schedule new trip and initialize segment inventory.
-- `GET /api/operator/trips/:tripId/manifest` - Passenger manifest report.
+- `GET /api/admin/dashboard`
+  - Returns global platform KPIs: total registered customers, total operators, pending applications, active fleet size, scheduled trips, confirmed bookings, simulated revenue, recent applications queue, and recent audit logs.
+- `GET /api/admin/operators?status=...&search=...&page=...&limit=...`
+  - Lists bus operators with filtering by approval status (`pending`, `approved`, `rejected`), text search across company name and registration number, and pagination.
+- `GET /api/admin/operators/:operatorId`
+  - Detailed operator profile inspection including fleet count and scheduled trips.
+- `PATCH /api/admin/operators/:operatorId/approval`
+  - Approve or reject an operator application.
+  - Body: `{ decision: 'approved' | 'rejected', rejectionReason?: string }`
+  - Side effects: Updates user `accountStatus` to `active` (on approval) or `rejected` (on rejection); logs an immutable `AuditLog` event.
+- `PATCH /api/admin/users/:userId/status`
+  - Suspend or reactivate user account.
+  - Body: `{ status: 'active' | 'suspended' }`
+- `GET /api/admin/audit-logs?action=...&page=...&limit=...`
+  - Cryptographically traceable chronological audit trail with pagination and action type filtering.
 
-### 3.8 Administrator Endpoints
-- `GET /api/admin/dashboard` - Global platform KPIs.
-- `GET /api/admin/operators` - Pending and active operator profiles.
-- `PATCH /api/admin/operators/:operatorId/status` - Approve, reject, or suspend operator.
-- `GET /api/admin/stops` / `POST /api/admin/stops` - Master stop catalog.
-- `GET /api/admin/routes` / `POST /api/admin/routes` - Master route network.
-- `GET /api/admin/bookings` - System-wide bookings review.
-- `GET /api/admin/audit-logs` - Comprehensive security and operational audit trail.
+---
 
+### 3.4 Operator Portal (`/api/operator`)
+*(Protected: Requires authenticated user with `operator` or `admin` role)*
+
+- `GET /api/operator/dashboard`
+  - Returns operator-isolated metrics: fleet size, active buses, scheduled trips, upcoming trips, confirmed bookings count, simulated revenue, and average seat occupancy percentage.
+
+---
+
+### 3.5 Bus Fleet Management (`/api/buses`)
+*(Protected: Requires `operator` or `admin` role; creation requires approved operator)*
+
+- `GET /api/buses`
+  - Lists buses. Operators only see their own fleet vehicles; administrators see all buses.
+- `GET /api/buses/:busId`
+  - Detailed bus inspection with seat layout definition. Enforces operator ownership.
+- `POST /api/buses`
+  - Registers a new bus vehicle and validates custom seat layout.
+  - Body:
+    ```json
+    {
+      "busNumber": "VOLVO-EXPRESS-1",
+      "busName": "Volvo 9600 Multi-Axle",
+      "busType": "AC Sleeper (2+1)",
+      "registrationNumber": "DL 01 AB 1234",
+      "totalSeats": 30,
+      "seatLayout": {
+        "rows": 10,
+        "columns": 3,
+        "deckCount": 1,
+        "seats": [
+          { "seatNumber": "1A", "row": 1, "col": 1, "deck": 1, "seatType": "sleeper" },
+          { "seatNumber": "1B", "row": 1, "col": 2, "deck": 1, "seatType": "sleeper" }
+        ]
+      },
+      "amenities": ["Wi-Fi", "Charging Point", "Blanket"]
+    }
+    ```
+  - Validation rules: `totalSeats` must strictly match `seatLayout.seats.length`; duplicate seat numbers are rejected with 400 Bad Request; duplicate registration number rejected with 409 Conflict.
+- `PUT /api/buses/:busId`
+  - Updates bus specifications and layout. Enforces operator ownership.
+- `PATCH /api/buses/:busId/status`
+  - Toggles bus `isActive` status (activate / deactivate). Enforces operator ownership.
+
+---
+
+### 3.6 Master Stop Catalog (`/api/stops`)
+- `GET /api/stops?city=...&search=...&isActive=...`
+  - Public endpoint: Browse physical boarding and dropping points.
+- `GET /api/stops/:stopId`
+  - View individual stop coordinates and address details.
+- `POST /api/stops` *(Admin only)*
+  - Registers a new physical stop.
+  - Body: `{ stopName, city, state, address, latitude, longitude }`
+  - Validation rules: `stopName` and `city` are required; duplicate stop name in the same city is blocked with 409 Conflict.
+- `PUT /api/stops/:stopId` *(Admin only)*
+  - Modifies stop information.
+- `PATCH /api/stops/:stopId/status` *(Admin only)*
+  - Toggles stop `isActive` status.
+
+---
+
+### 3.7 Route Network & Stop Sequences (`/api/routes`)
+- `GET /api/routes`
+  - Public endpoint: Lists established route corridors with source and destination details.
+- `GET /api/routes/:routeId`
+  - Full route corridor inspection with ordered intermediate stops timeline.
+- `POST /api/routes` *(Admin only)*
+  - Creates a new reusable route corridor with sequential stop waypoints.
+  - Body:
+    ```json
+    {
+      "routeName": "Delhi to Amritsar Express",
+      "sourceStopId": "67...",
+      "destinationStopId": "67...",
+      "distanceKm": 450,
+      "estimatedDurationMinutes": 480,
+      "stops": [
+        { "stopId": "67...", "stopSequence": 0, "distanceFromStart": 0 },
+        { "stopId": "67...", "stopSequence": 1, "distanceFromStart": 310 },
+        { "stopId": "67...", "stopSequence": 2, "distanceFromStart": 450 }
+      ]
+    }
+    ```
+  - Validation rules: Source and destination stops cannot be identical; stop sequences must be strictly sequential.
+- `PATCH /api/routes/:routeId/status` *(Admin only)*
+  - Toggles route `isActive` status.
+
+---
+
+### 3.8 Trip Scheduling & Passenger Manifests (`/api/trips`)
+- `GET /api/trips?operatorId=...&routeId=...&date=...&status=...`
+  - Public/Operator trip browsing. If authenticated as an operator, automatically filters to trips belonging to that operator.
+- `GET /api/trips/:tripId`
+  - Detailed trip information including stops and total available inventory seats.
+- `POST /api/trips` *(Protected: Approved Operator / Admin)*
+  - Schedules a new trip journey.
+  - Body:
+    ```json
+    {
+      "busId": "67...",
+      "routeId": "67...",
+      "travelDate": "2026-11-20T00:00:00.000Z",
+      "departureTime": "2026-11-20T08:00:00.000Z",
+      "arrivalTime": "2026-11-20T16:00:00.000Z",
+      "baseFare": 750
+    }
+    ```
+  - Automated Operations:
+    1. Enforces vehicle operator ownership.
+    2. Enforces operator approval state (`approved` required).
+    3. Validates arrival time is strictly after departure time.
+    4. Detects vehicle scheduling conflicts (`departureTime < existingArr && arrivalTime > existingDep`) on the same physical vehicle; rejects overlap with 409 Conflict.
+    5. Automatically generates **TripStops** records with linear interpolation of intermediate arrival/departure timings based on route stop sequence and distance.
+    6. Automatically generates **SeatInventory** documents matching every seat in the bus layout (`tripId`, `seatNumber`, `seatType`, `isActive: true`, `activeSegments: []`) ensuring uniqueness on `{ tripId, seatNumber }`.
+    7. Records `TRIP_SCHEDULED` in `AuditLog`.
+- `PATCH /api/trips/:tripId/cancel` *(Protected: Operator owner / Admin)*
+  - Cancels scheduled trip, sets `tripStatus: 'cancelled'`, closes seat inventory, and records `TRIP_CANCELLED` audit log.
+- `GET /api/trips/:tripId/manifest` *(Protected: Operator owner / Admin)*
+  - Generates comprehensive passenger manifest detailing all reserved seats, passenger names, age, gender, contact numbers, PNR codes, boarding stops, dropping stops, sequence intervals `[fromSequence, toSequence)`, and collected segment fares.

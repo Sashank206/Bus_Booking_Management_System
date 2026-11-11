@@ -11,24 +11,17 @@ export function AuthProvider({ children }) {
 
   // Load authenticated user profile from backend
   const loadUser = useCallback(async () => {
-    const storedToken = localStorage.getItem('busgo_token');
-    if (!storedToken) {
-      setUser(null);
-      setOperator(null);
-      setLoading(false);
-      return;
-    }
-
     try {
       const response = await api.get('/auth/me');
       if (response && response.data && response.data.user) {
         setUser(response.data.user);
         setOperator(response.data.operator || null);
       } else {
-        throw new Error('Invalid user payload');
+        setUser(null);
+        setOperator(null);
       }
     } catch (err) {
-      console.warn('[Auth] Session check failed or expired:', err.message);
+      // Session does not exist or expired
       localStorage.removeItem('busgo_token');
       setUser(null);
       setOperator(null);
