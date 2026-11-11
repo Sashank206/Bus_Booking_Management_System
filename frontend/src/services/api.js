@@ -6,13 +6,31 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 10000
+  timeout: 15000
 });
 
-// Response interceptor for standard error handling
+// Request interceptor: attach token from localStorage if present
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('busgo_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor: unwrap data and normalize error payloads
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    // If token is invalid or expired, clear it
+    if (error.response?.status === 401) {
+      localStorage.removeItem('busgo_token');
+      localStorage.removeItem('busgo_user');
+    }
+
     const errorPayload = {
       status: error.response?.status || 500,
       message:
@@ -21,6 +39,7 @@ api.interceptors.response.use(
         'An unexpected network error occurred. Please check your connection.',
       errors: error.response?.data?.errors || null
     };
+
     return Promise.reject(errorPayload);
   }
 );
@@ -31,4 +50,3 @@ export const checkApiHealth = async () => {
 };
 
 export default api;
-

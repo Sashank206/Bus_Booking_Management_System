@@ -95,7 +95,7 @@ let server;
 if (require.main === module) {
   connectDB().then(() => {
     server = app.listen(PORT, () => {
-      console.log(`[BusGo] Backend server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+      console.log(`[BusGo] Backend server running on port at: http://localhost:${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
       console.log(`[BusGo] Health check accessible at: http://localhost:${PORT}/api/health`);
     });
   });
