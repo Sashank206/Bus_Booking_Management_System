@@ -147,7 +147,7 @@ export default function LoginPage() {
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => fillCredentials('admin@busgo.com', 'AdminPass123!')}
+                onClick={() => fillCredentials('admin@busgo.com', 'BusGo@Demo2026')}
                 className="flex flex-col items-center p-2 rounded-lg border border-purple-200 bg-purple-50/50 hover:bg-purple-50 text-purple-900 transition-colors text-center cursor-pointer"
               >
                 <ShieldCheck className="w-4 h-4 text-purple-600 mb-1" />
@@ -156,7 +156,7 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => fillCredentials('operator@busgo.com', 'OperatorPass123!')}
+                onClick={() => fillCredentials('rajesh@travels.com', 'BusGo@Demo2026')}
                 className="flex flex-col items-center p-2 rounded-lg border border-amber-200 bg-amber-50/50 hover:bg-amber-50 text-amber-900 transition-colors text-center cursor-pointer"
               >
                 <Briefcase className="w-4 h-4 text-amber-600 mb-1" />
@@ -165,7 +165,7 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => fillCredentials('customer@busgo.com', 'CustomerPass123!')}
+                onClick={() => fillCredentials('priya.sharma@example.com', 'BusGo@Demo2026')}
                 className="flex flex-col items-center p-2 rounded-lg border border-blue-200 bg-blue-50/50 hover:bg-blue-50 text-blue-900 transition-colors text-center cursor-pointer"
               >
                 <UserCheck className="w-4 h-4 text-blue-600 mb-1" />

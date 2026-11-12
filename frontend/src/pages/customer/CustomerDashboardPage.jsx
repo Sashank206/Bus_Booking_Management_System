@@ -10,7 +10,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Eye,
-  RotateCcw
+  RotateCcw,
+  CreditCard,
+  XCircle,
+  DollarSign
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import useToast from '../../hooks/useToast';
@@ -21,6 +24,8 @@ import EmptyState from '../../components/ui/EmptyState';
 import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
 import StatusBadge from '../../components/ui/StatusBadge';
 import TicketModal from '../../components/booking/TicketModal';
+import PaymentModal from '../../components/booking/PaymentModal';
+import CancellationModal from '../../components/booking/CancellationModal';
 
 export default function CustomerDashboardPage() {
   const { user } = useAuth();
@@ -29,9 +34,17 @@ export default function CustomerDashboardPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState('all');
+
+  // Modals state
   const [activeTicketData, setActiveTicketData] = useState(null);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [fetchingTicket, setFetchingTicket] = useState(false);
+
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [activePaymentBooking, setActivePaymentBooking] = useState(null);
+
+  const [showCancellationModal, setShowCancellationModal] = useState(false);
+  const [activeCancellationBooking, setActiveCancellationBooking] = useState(null);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -52,11 +65,13 @@ export default function CustomerDashboardPage() {
 
   // Compute live statistics
   const activeCount = bookings.filter(
-    (b) => b.bookingStatus === 'confirmed' || b.bookingStatus === 'pending_payment'
+    (b) => b.bookingStatus === 'confirmed' || b.bookingStatus === 'partially_cancelled' || b.bookingStatus === 'pending_payment'
   ).length;
 
   const confirmedCount = bookings.filter((b) => b.bookingStatus === 'confirmed').length;
   const pendingCount = bookings.filter((b) => b.bookingStatus === 'pending_payment').length;
+  const partialCount = bookings.filter((b) => b.bookingStatus === 'partially_cancelled').length;
+  const cancelledCount = bookings.filter((b) => b.bookingStatus === 'cancelled').length;
 
   // Filter bookings by selected status tab
   const filteredBookings = bookings.filter((b) => {
@@ -75,6 +90,42 @@ export default function CustomerDashboardPage() {
     } finally {
       setFetchingTicket(false);
     }
+  };
+
+  const handleOpenPayment = async (booking) => {
+    try {
+      const res = await api.get(`/bookings/${booking._id}`);
+      setActivePaymentBooking(res.data);
+      setShowPaymentModal(true);
+    } catch (err) {
+      toast.error(err.message || 'Failed to load booking details for payment.');
+    }
+  };
+
+  const handlePaymentSuccess = (result) => {
+    fetchBookings();
+    if (result) {
+      setActiveTicketData(result);
+      setShowTicketModal(true);
+    }
+  };
+
+  const handlePaymentFailure = () => {
+    fetchBookings();
+  };
+
+  const handleOpenCancellation = async (booking) => {
+    try {
+      const res = await api.get(`/bookings/${booking._id}`);
+      setActiveCancellationBooking(res.data);
+      setShowCancellationModal(true);
+    } catch (err) {
+      toast.error(err.message || 'Failed to load booking details for cancellation.');
+    }
+  };
+
+  const handleCancellationSuccess = () => {
+    fetchBookings();
   };
 
   const formatDate = (dateString) => {
@@ -199,7 +250,8 @@ export default function CustomerDashboardPage() {
             { id: 'all', label: 'All Bookings', count: bookings.length },
             { id: 'confirmed', label: 'Confirmed', count: confirmedCount },
             { id: 'pending_payment', label: 'Pending Payment', count: pendingCount },
-            { id: 'cancelled', label: 'Cancelled', count: bookings.filter((b) => b.bookingStatus === 'cancelled').length }
+            { id: 'partially_cancelled', label: 'Partially Cancelled', count: partialCount },
+            { id: 'cancelled', label: 'Cancelled', count: cancelledCount }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -288,13 +340,40 @@ export default function CustomerDashboardPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="text-right mr-1">
                         <span className="text-xs text-slate-400 block font-medium">Total Fare</span>
                         <span className="text-base font-black text-slate-900 font-mono">
                           ₹{b.totalAmount}
                         </span>
                       </div>
+
+                      {/* Pay Now for Pending Bookings */}
+                      {b.bookingStatus === 'pending_payment' && (
+                        <Button
+                          variant="accent"
+                          size="sm"
+                          icon={CreditCard}
+                          onClick={() => handleOpenPayment(b)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        >
+                          Pay Now
+                        </Button>
+                      )}
+
+                      {/* Cancel Seats for Confirmed or Partially Cancelled Bookings */}
+                      {(b.bookingStatus === 'confirmed' || b.bookingStatus === 'partially_cancelled') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={XCircle}
+                          onClick={() => handleOpenCancellation(b)}
+                          className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200"
+                        >
+                          Cancel Seats
+                        </Button>
+                      )}
+
                       <Button
                         variant="secondary"
                         size="sm"
@@ -356,6 +435,33 @@ export default function CustomerDashboardPage() {
             setActiveTicketData(null);
           }}
           bookingData={activeTicketData}
+        />
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && activePaymentBooking && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setActivePaymentBooking(null);
+          }}
+          bookingData={activePaymentBooking}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentFailure={handlePaymentFailure}
+        />
+      )}
+
+      {/* Cancellation Modal */}
+      {showCancellationModal && activeCancellationBooking && (
+        <CancellationModal
+          isOpen={showCancellationModal}
+          onClose={() => {
+            setShowCancellationModal(false);
+            setActiveCancellationBooking(null);
+          }}
+          bookingData={activeCancellationBooking}
+          onCancellationSuccess={handleCancellationSuccess}
         />
       )}
     </div>

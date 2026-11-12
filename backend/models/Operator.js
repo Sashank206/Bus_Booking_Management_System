@@ -51,7 +51,6 @@ const operatorSchema = new mongoose.Schema(
 );
 
 // Indexes
-operatorSchema.index({ userId: 1 }, { unique: true });
 operatorSchema.index({ approvalStatus: 1 });
 
 const Operator = mongoose.model('Operator', operatorSchema);

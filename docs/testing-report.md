@@ -175,8 +175,127 @@ BusGo employs a multi-tiered test strategy covering:
 | Customer 2 List | Customer 2's booking list remains empty (200) | `GET /api/bookings/my-bookings` | PASS | 2026-11-11 |
 | Client Build | React 19 production build succeeds with Phase 6 components | `frontend/` | PASS (768ms) | 2026-11-11 |
 
+---
+
+## 5. Phase 7 Test Execution Matrix (Payment, Confirmation, Cancellation & Refunds)
+
+| Category | Description / Assertion | Target Component | Status | Execution Date |
+|---|---|---|:---:|:---:|
+| Payment Validation | Missing `idempotencyKey` rejected with 400 | `POST /api/payments/simulate` | PASS | 2026-11-12 |
+| Payment Validation | Invalid `simulationAction` rejected with 400 | `POST /api/payments/simulate` | PASS | 2026-11-12 |
+| Payment Security | Customer 2 blocked with 403 paying for Customer 1 booking | `POST /api/payments/simulate` | PASS | 2026-11-12 |
+| Payment Success | Payment success simulation returns 200 OK | `POST /api/payments/simulate` | PASS | 2026-11-12 |
+| State Transition | Booking status transitions to `confirmed` | `backend/models/Booking.js` | PASS | 2026-11-12 |
+| Seat Confirmation | BookingSeat allocations transition to `confirmed` | `backend/models/BookingSeat.js` | PASS | 2026-11-12 |
+| Inventory State | SeatInventory activeSegments update to `confirmed` | `backend/models/SeatInventory.js` | PASS | 2026-11-12 |
+| Payment Reference | Generated valid transaction reference (`SIM_TXN_...`) | `backend/models/Payment.js` | PASS | 2026-11-12 |
+| Idempotency Replay | Replaying same idempotency key succeeds idempotently (200) | `POST /api/payments/simulate` | PASS | 2026-11-12 |
+| Idempotency Flag | Response explicitly flags duplicate replay (`isDuplicate: true`) | `POST /api/payments/simulate` | PASS | 2026-11-12 |
+| Payment Failure | Payment failure simulation returns 200 with fail status | `POST /api/payments/simulate` | PASS | 2026-11-12 |
+| State Transition | Booking transitions to `failed` on payment failure | `backend/models/Booking.js` | PASS | 2026-11-12 |
+| Seat Release | Seat allocation released (`released`) on payment failure | `backend/models/BookingSeat.js` | PASS | 2026-11-12 |
+| Inventory Release | Held segment removed from `SeatInventory.activeSegments` | `backend/models/SeatInventory.js` | PASS | 2026-11-12 |
+| Payment Guard | Rejects payment on already failed/cancelled booking (400) | `POST /api/payments/simulate` | PASS | 2026-11-12 |
+| Hold Expiry Guard | Stale booking with expired hold rejected with 400 | `POST /api/payments/simulate` | PASS | 2026-11-12 |
+| State Auto-Expiry | Expired booking automatically transitioned to `expired` | `backend/models/Booking.js` | PASS | 2026-11-12 |
+| Stale Clean | Stale held segment cleaned from SeatInventory | `backend/models/SeatInventory.js` | PASS | 2026-11-12 |
+| Ticket Retrieval | Customer fetches ticket successfully with 200 OK | `GET /api/bookings/:id/ticket` | PASS | 2026-11-12 |
+| Ticket Data | Ticket data contains correct PNR and itinerary | `GET /api/bookings/:id/ticket` | PASS | 2026-11-12 |
+| QR Payload | Ticket contains verifiable QR payload string with PNR | `GET /api/bookings/:id/ticket` | PASS | 2026-11-12 |
+| Policy Summary | Ticket includes active cancellation policy cutoff summary | `GET /api/bookings/:id/ticket` | PASS | 2026-11-12 |
+| Ticket Security | Customer 2 blocked from Customer 1 ticket with 403 Forbidden | `GET /api/bookings/:id/ticket` | PASS | 2026-11-12 |
+| Admin Ticket Access| Administrator can access any customer ticket for support | `GET /api/bookings/:id/ticket` | PASS | 2026-11-12 |
+| PNR Verification | Public PNR verification succeeds with 200 OK | `GET /api/bookings/verify/:pnr` | PASS | 2026-11-12 |
+| Verification Data | Public verification returns correct booking details | `GET /api/bookings/verify/:pnr` | PASS | 2026-11-12 |
+| Privacy Masking | Public verification masks customer phone number | `GET /api/bookings/verify/:pnr` | PASS | 2026-11-12 |
+| Privacy Masking | Public verification masks customer email address | `GET /api/bookings/verify/:pnr` | PASS | 2026-11-12 |
+| PNR 404 | Public verification with non-existent PNR returns 404 | `GET /api/bookings/verify/:pnr` | PASS | 2026-11-12 |
+| Cleanup Routine | `POST /api/bookings/cleanup-expired` returns 200 OK | `POST /api/bookings/cleanup-expired` | PASS | 2026-11-12 |
+| Cleanup Metrics | Cleanup routine reports cleanedCount and releasedSeats | `POST /api/bookings/cleanup-expired` | PASS | 2026-11-12 |
+| Cleanup Idempotent| Repeat cleanup executes idempotently without errors | `POST /api/bookings/cleanup-expired` | PASS | 2026-11-12 |
+| Policy >24h | Calculates >24h departure cancellation as eligible | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy >24h | Applies 10% charge tier for >24 hours | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy >24h Calc | Deduction is ₹100, refund is ₹900 on ₹1000 fare | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy 12-24h | Applies 25% charge tier for 12 to 24 hours | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy 12-24h Calc| Deduction is ₹250, refund is ₹750 | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy 2-12h | Applies 50% charge tier for 2 to 12 hours | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy 2-12h Calc | Deduction is ₹500, refund is ₹500 | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy Cutoff | Cancellation within 2-hour cutoff is ineligible | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy Cutoff Calc| Refund amount within cutoff window is ₹0 | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy Admin Get | Admin fetches cancellation policy with 200 OK | `GET /api/admin/cancellation-policy` | PASS | 2026-11-12 |
+| Policy Default | Default cutoff window is 2 hours | `backend/services/policyService.js` | PASS | 2026-11-12 |
+| Policy Security | Customer blocked with 403 from updating policy | `PUT /api/admin/cancellation-policy` | PASS | 2026-11-12 |
+| Policy Update | Admin updates cutoff hours with 200 OK | `PUT /api/admin/cancellation-policy` | PASS | 2026-11-12 |
+| Policy State | Updated policy reflects new cutoffHours | `backend/services/policyService.js` | PASS | 2026-11-12 |
+| Cancellation Req | Empty seat IDs array rejected with 400 | `POST /api/bookings/:id/cancel` | PASS | 2026-11-12 |
+| Cancellation Req | Duplicate seat IDs in request rejected with 400 | `POST /api/bookings/:id/cancel` | PASS | 2026-11-12 |
+| Cancellation RBAC| Customer 2 blocked with 403 cancelling Customer 1 seats | `POST /api/bookings/:id/cancel` | PASS | 2026-11-12 |
+| Partial Cancel | Partial cancellation succeeds with 200 OK | `POST /api/bookings/:id/cancel` | PASS | 2026-11-12 |
+| Partial Seat State| Cancelled seat updated to `cancelled` | `backend/models/BookingSeat.js` | PASS | 2026-11-12 |
+| Partial Remaining | Uncancelled seat remains `confirmed` | `backend/models/BookingSeat.js` | PASS | 2026-11-12 |
+| Partial Booking | Booking status transitions to `partially_cancelled` | `backend/models/Booking.js` | PASS | 2026-11-12 |
+| Partial Segment | Cancelled seat segment released from SeatInventory | `backend/models/SeatInventory.js` | PASS | 2026-11-12 |
+| Partial Keep Seg | Unaffected seat segment remains in SeatInventory | `backend/models/SeatInventory.js` | PASS | 2026-11-12 |
+| Partial Refund | Refund record generated according to 10% charge tier | `backend/models/Refund.js` | PASS | 2026-11-12 |
+| Re-cancel Guard | Rejects re-cancellation with 400 for already cancelled seat | `POST /api/bookings/:id/cancel` | PASS | 2026-11-12 |
+| Full Cancel | Final seat cancellation succeeds with 200 OK | `POST /api/bookings/:id/cancel` | PASS | 2026-11-12 |
+| Full Seat State | All seat allocations updated to `cancelled` | `backend/models/BookingSeat.js` | PASS | 2026-11-12 |
+| Full Booking State| Booking status transitions to `cancelled` | `backend/models/Booking.js` | PASS | 2026-11-12 |
+| Full Inventory Rel| All seat segments released from SeatInventory | `backend/models/SeatInventory.js` | PASS | 2026-11-12 |
+| Cancel History | Fetches cancellation history for booking with 200 OK | `GET /api/bookings/:id/cancellations` | PASS | 2026-11-12 |
+| Cancel Records | Booking cancellation history contains 2 records | `GET /api/bookings/:id/cancellations` | PASS | 2026-11-12 |
+| Refund Record | Refund record created in database | `backend/models/Refund.js` | PASS | 2026-11-12 |
+| Refund Format | Refund reference formatted as `SIM_REF_...` | `backend/models/Refund.js` | PASS | 2026-11-12 |
+| Customer Refunds | Customer fetches booking refunds with 200 OK | `GET /api/bookings/:id/refunds` | PASS | 2026-11-12 |
+| Refund Items | Returns all refund records for booking | `GET /api/bookings/:id/refunds` | PASS | 2026-11-12 |
+| Refund Security | Customer 2 blocked with 403 from Customer 1 refunds | `GET /api/bookings/:id/refunds` | PASS | 2026-11-12 |
+| Admin Refunds | Admin lists all system refunds with 200 OK | `GET /api/admin/refunds` | PASS | 2026-11-12 |
+| Admin Refund All | Admin receives all registered refunds | `GET /api/admin/refunds` | PASS | 2026-11-12 |
+| Refund Simulation| Admin simulates refund status update with 200 OK | `POST /api/admin/refunds/:id/simulate` | PASS | 2026-11-12 |
+| Refund State | Refund status updated to `processing` | `backend/models/Refund.js` | PASS | 2026-11-12 |
+| Refund Sim RBAC | Customer blocked with 403 from admin refund simulation | `POST /api/admin/refunds/:id/simulate` | PASS | 2026-11-12 |
+| Admin Payments | Admin lists all payments with 200 OK | `GET /api/admin/payments` | PASS | 2026-11-12 |
+| Admin Payment All| Admin receives list of all payments | `GET /api/admin/payments` | PASS | 2026-11-12 |
+| Admin Cancels | Admin lists all cancellations with 200 OK | `GET /api/admin/cancellations` | PASS | 2026-11-12 |
+| Admin Cancel All | Admin receives list of all cancellations | `GET /api/admin/cancellations` | PASS | 2026-11-12 |
+| Notification | Notification dispatched for `BOOKING_CONFIRMED` | `backend/models/Notification.js` | PASS | 2026-11-12 |
+| Notification | Notification dispatched for booking cancellation | `backend/models/Notification.js` | PASS | 2026-11-12 |
+| Audit Trail | AuditLog recorded for `PAYMENT_SUCCESS` | `backend/models/AuditLog.js` | PASS | 2026-11-12 |
+| Audit Trail | AuditLog recorded for seat cancellation | `backend/models/AuditLog.js` | PASS | 2026-11-12 |
+| Concurrency Isolation | Stolen/reused idempotency key across different booking rejected (409) | `POST /api/payments/simulate` | PASS | 2026-11-12 |
+| Concurrency Race | Concurrent payment requests safely process booking without double charges | `POST /api/payments/simulate` | PASS | 2026-11-12 |
+| Concurrency State | Booking cleanly confirmed once under concurrent payment calls | `backend/models/Booking.js` | PASS | 2026-11-12 |
+| Concurrency Cancel | Concurrent cancellation of same seat allows only 1 and rejects competing (409/400) | `POST /api/bookings/:id/cancel` | PASS | 2026-11-12 |
+| Seat Cancellation | Seat allocation cleanly cancelled exactly once without double release | `backend/models/BookingSeat.js` | PASS | 2026-11-12 |
+| Refund Cap Guard | Rejects cancellation with 400 when cumulative refunds exceed original payment | `POST /api/bookings/:id/cancel` | PASS | 2026-11-12 |
+| Refund Cap Reason | Error message explains cumulative refund cap boundary violation | `POST /api/bookings/:id/cancel` | PASS | 2026-11-12 |
+| Lifecycle Pending | Refund transitions from `pending` -> `processing` (200 OK) | `POST /api/admin/refunds/:id/simulate` | PASS | 2026-11-12 |
+| Lifecycle Process | Refund status successfully updated to `processing` | `backend/models/Refund.js` | PASS | 2026-11-12 |
+| Lifecycle Complete | Refund transitions from `processing` -> `completed` (200 OK) | `POST /api/admin/refunds/:id/simulate` | PASS | 2026-11-12 |
+| Lifecycle Settled | Refund status updated to terminal `completed` | `backend/models/Refund.js` | PASS | 2026-11-12 |
+| Lifecycle Duplicate| Duplicate refund status update rejected with 400 Bad Request | `POST /api/admin/refunds/:id/simulate` | PASS | 2026-11-12 |
+| Lifecycle Terminal | Transition from terminal `completed` status rejected with 400 | `POST /api/admin/refunds/:id/simulate` | PASS | 2026-11-12 |
+| Lifecycle Retry | Failed refund retried to `processing` (200 OK) | `POST /api/admin/refunds/:id/simulate` | PASS | 2026-11-12 |
+| Policy Boundary | Exactly 24.00 hours before departure -> 10% charge tier | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy Boundary | 23.99 hours before departure -> 25% charge tier | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy Boundary | Exactly 12.00 hours before departure -> 25% charge tier | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy Boundary | 11.99 hours before departure -> 50% charge tier | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy Boundary | Exactly 2.00 hours before departure -> 50% charge tier (eligible) | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy Boundary | 1.99 hours before departure -> Cutoff window (ineligible / 0% refund) | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Policy Boundary | Past scheduled departure (-1.0h) -> Non-cancellable (0% refund) | `calculateSeatCancellation` | PASS | 2026-11-12 |
+| Rollback State | Failed cancellation returns 404 cleanly | `POST /api/bookings/:id/cancel` | PASS | 2026-11-12 |
+| Rollback State | SeatInventory activeSegments remain untouched and consistent | `backend/models/SeatInventory.js` | PASS | 2026-11-12 |
+| Client Build | React 19 production build succeeds with Phase 7 components | `frontend/` | PASS (721ms) | 2026-11-12 |
+
+---
+
 ### Combined Test Suite Summary
-- Total Automated Backend Tests: **160**
-- Tests Passing: **160 (100%)**
+- Phase 3 Tests: **45 Passed** (Foundation, 18 Collections, RBAC, Hashes)
+- Phase 4 Tests: **25 Passed** (Integration Audit, Auth, Session, Security)
+- Phase 5 Tests: **44 Passed** (Operator Approval, Fleet, Route, Schedules)
+- Phase 6 Tests: **46 Passed** (Search, Segment Intervals, Holds, Passenger Booking)
+- Phase 7 Tests: **105 Passed** (Simulated Payment, Ticket & PNR, Cancellations, Refunds, Policy Engine, Concurrency & Lifecycle)
+- Total Automated Backend Tests: **265**
+- Tests Passing: **265 (100%)**
 - Tests Failing: **0**
-- Frontend Production Build: **PASS (768ms, 0 errors)**
+- Frontend Production Build: **PASS (721ms, 0 errors, 2,172 modules)**

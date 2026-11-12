@@ -26,6 +26,7 @@ import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
 import SeatMap from '../../components/booking/SeatMap';
 import PassengerFormModal from '../../components/booking/PassengerFormModal';
 import TicketModal from '../../components/booking/TicketModal';
+import PaymentModal from '../../components/booking/PaymentModal';
 import Modal from '../../components/ui/Modal';
 
 export default function SearchPage() {
@@ -59,6 +60,8 @@ export default function SearchPage() {
   const [holdData, setHoldData] = useState(null);
   const [showPassengerModal, setShowPassengerModal] = useState(false);
   const [holdingSeats, setHoldingSeats] = useState(false);
+  const [pendingPaymentBooking, setPendingPaymentBooking] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [confirmedBookingData, setConfirmedBookingData] = useState(null);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [showAuthRequiredModal, setShowAuthRequiredModal] = useState(false);
@@ -221,9 +224,24 @@ export default function SearchPage() {
   const handleBookingSuccess = (bookingResult) => {
     setShowPassengerModal(false);
     setHoldData(null);
-    setConfirmedBookingData(bookingResult);
-    setShowTicketModal(true);
+    setPendingPaymentBooking(bookingResult);
+    setShowPaymentModal(true);
     // Refresh search results
+    executeSearch(origin, destination, date);
+  };
+
+  const handlePaymentSuccess = (confirmedData) => {
+    setShowPaymentModal(false);
+    setPendingPaymentBooking(null);
+    setConfirmedBookingData(confirmedData);
+    setShowTicketModal(true);
+    executeSearch(origin, destination, date);
+  };
+
+  const handlePaymentFailure = () => {
+    setShowPaymentModal(false);
+    setPendingPaymentBooking(null);
+    setSelectedSeats([]);
     executeSearch(origin, destination, date);
   };
 
@@ -796,6 +814,20 @@ export default function SearchPage() {
           holdData={holdData}
           onBookingSuccess={handleBookingSuccess}
           onHoldExpired={handleHoldExpired}
+        />
+      )}
+
+      {/* Simulated Payment Modal */}
+      {showPaymentModal && pendingPaymentBooking && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setPendingPaymentBooking(null);
+          }}
+          bookingData={pendingPaymentBooking}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentFailure={handlePaymentFailure}
         />
       )}
 

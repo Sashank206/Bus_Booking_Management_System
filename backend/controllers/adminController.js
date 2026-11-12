@@ -1,6 +1,18 @@
-const { User, Operator, Bus, Trip, Booking, AuditLog } = require('../models');
+const {
+  User,
+  Operator,
+  Bus,
+  Trip,
+  Booking,
+  AuditLog,
+  Payment,
+  Cancellation,
+  Refund,
+  Notification
+} = require('../models');
 const AppError = require('../utils/appError');
 const asyncHandler = require('../middleware/asyncHandler');
+const { getCancellationPolicy, updateCancellationPolicy } = require('../services/policyService');
 
 /**
  * Get aggregated system statistics for Admin Dashboard
@@ -278,11 +290,256 @@ const getAuditLogs = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * Get all payments for admin review with filtering & pagination
+ * GET /api/admin/payments
+ */
+const getAdminPayments = asyncHandler(async (req, res, next) => {
+  const { status, page = 1, limit = 20 } = req.query;
+
+  const query = {};
+  if (status && ['pending', 'successful', 'failed'].includes(status)) {
+    query.paymentStatus = status;
+  }
+
+  const pageNum = Math.max(1, parseInt(page, 10));
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [payments, total] = await Promise.all([
+    Payment.find(query)
+      .populate({
+        path: 'bookingId',
+        select: 'pnr totalAmount bookingStatus journeyDate userId',
+        populate: { path: 'userId', select: 'name email phone' }
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum),
+    Payment.countDocuments(query)
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      payments,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum) || 1
+      }
+    }
+  });
+});
+
+/**
+ * Get all cancellations for admin monitoring
+ * GET /api/admin/cancellations
+ */
+const getAdminCancellations = asyncHandler(async (req, res, next) => {
+  const { status, page = 1, limit = 20 } = req.query;
+
+  const query = {};
+  if (status) query.cancellationStatus = status;
+
+  const pageNum = Math.max(1, parseInt(page, 10));
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [cancellations, total] = await Promise.all([
+    Cancellation.find(query)
+      .populate('bookingId', 'pnr totalAmount bookingStatus journeyDate')
+      .populate('requestedBy', 'name email role')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum),
+    Cancellation.countDocuments(query)
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      cancellations,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum) || 1
+      }
+    }
+  });
+});
+
+/**
+ * Get all refunds for admin management
+ * GET /api/admin/refunds
+ */
+const getAdminRefunds = asyncHandler(async (req, res, next) => {
+  const { status, page = 1, limit = 20 } = req.query;
+
+  const query = {};
+  if (status && ['pending', 'processing', 'completed', 'failed'].includes(status)) {
+    query.refundStatus = status;
+  }
+
+  const pageNum = Math.max(1, parseInt(page, 10));
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [refunds, total] = await Promise.all([
+    Refund.find(query)
+      .populate({
+        path: 'cancellationId',
+        populate: { path: 'bookingId', select: 'pnr totalAmount' }
+      })
+      .populate('paymentId', 'paymentReference paymentAmount')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum),
+    Refund.countDocuments(query)
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      refunds,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum) || 1
+      }
+    }
+  });
+});
+
+/**
+ * Admin: Simulate or update refund status
+ * POST /api/admin/refunds/:refundId/simulate
+ */
+const simulateRefundStatus = asyncHandler(async (req, res, next) => {
+  const { refundId } = req.params;
+  const { status, reason } = req.body;
+
+  if (!['pending', 'processing', 'completed', 'failed'].includes(status)) {
+    return next(
+      new AppError("Invalid refund status. Must be 'pending', 'processing', 'completed', or 'failed'.", 400)
+    );
+  }
+
+  const refund = await Refund.findById(refundId).populate({
+    path: 'cancellationId',
+    populate: { path: 'bookingId', select: 'pnr userId' }
+  });
+
+  if (!refund) {
+    return next(new AppError('Refund record not found.', 404));
+  }
+
+  const prevStatus = refund.refundStatus;
+
+  // Duplicate status update check
+  if (prevStatus === status) {
+    return next(new AppError(`Refund is already in '${status}' status.`, 400));
+  }
+
+  // Terminal state check
+  if (prevStatus === 'completed') {
+    return next(new AppError("Cannot change refund status: 'completed' is a final terminal state.", 400));
+  }
+
+  // Transition validation
+  const validTransitions = {
+    pending: ['processing', 'completed', 'failed'],
+    processing: ['completed', 'failed'],
+    failed: ['processing', 'pending']
+  };
+
+  if (!validTransitions[prevStatus] || !validTransitions[prevStatus].includes(status)) {
+    return next(
+      new AppError(`Invalid refund status transition from '${prevStatus}' to '${status}'.`, 400)
+    );
+  }
+
+  refund.refundStatus = status;
+  if (status === 'completed') {
+    refund.processedAt = new Date();
+  }
+  await refund.save();
+
+  await AuditLog.create({
+    userId: req.user._id,
+    action: 'REFUND_STATUS_UPDATED',
+    entityType: 'Refund',
+    entityId: refund._id,
+    description: `Refund status updated from ${prevStatus} to ${status}. Reason: ${reason || 'Admin simulation'}`
+  }).catch(() => {});
+
+  if (refund.cancellationId?.bookingId?.userId) {
+    await Notification.create({
+      userId: refund.cancellationId.bookingId.userId,
+      bookingId: refund.cancellationId.bookingId._id,
+      notificationType: status === 'completed' ? 'REFUND_COMPLETED' : 'REFUND_UPDATED',
+      message: `Your refund of ₹${refund.refundAmount} (Ref: ${refund.refundReference}) is now ${status}.`
+    }).catch(() => {});
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: `Refund status successfully updated to '${status}'.`,
+    data: { refund }
+  });
+});
+
+/**
+ * Get active cancellation policy configuration
+ * GET /api/admin/cancellation-policy
+ */
+const getCancellationPolicyConfig = asyncHandler(async (req, res, next) => {
+  const policy = getCancellationPolicy();
+  res.status(200).json({
+    status: 'success',
+    data: { policy }
+  });
+});
+
+/**
+ * Update cancellation policy configuration
+ * PUT /api/admin/cancellation-policy
+ */
+const updateCancellationPolicyConfig = asyncHandler(async (req, res, next) => {
+  try {
+    const updatedPolicy = updateCancellationPolicy(req.body);
+
+    await AuditLog.create({
+      userId: req.user._id,
+      action: 'POLICY_UPDATED',
+      entityType: 'Cancellation',
+      description: `Admin updated cancellation policy: cutoff ${updatedPolicy.cutoffHours}h, ${updatedPolicy.tiers.length} tiers`
+    }).catch(() => {});
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Cancellation policy successfully updated.',
+      data: { policy: updatedPolicy }
+    });
+  } catch (err) {
+    return next(new AppError(err.message, 400));
+  }
+});
+
 module.exports = {
   getAdminDashboard,
   getOperators,
   getOperatorById,
   updateOperatorApproval,
   updateUserStatus,
-  getAuditLogs
+  getAuditLogs,
+  getAdminPayments,
+  getAdminCancellations,
+  getAdminRefunds,
+  simulateRefundStatus,
+  getCancellationPolicyConfig,
+  updateCancellationPolicyConfig
 };

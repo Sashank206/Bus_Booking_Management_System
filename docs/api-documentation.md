@@ -250,3 +250,102 @@ Base URL (Development): `http://localhost:5000/api`
 - `GET /api/bookings/:bookingId` *(Protected: Customer owner / Admin)*
   - Detailed booking retrieval by MongoDB ObjectId or PNR. Enforces strict customer ownership isolation (Customer A cannot access Customer B's booking). Admin retains platform-wide verification access.
 
+---
+
+### 3.11 Simulated Payment Processing (`/api/payments`)
+- `POST /api/payments/simulate` *(Protected: Customer owner / Admin)*
+  - Simulates payment gateway processing (success or failure) without actual credit card or banking integration.
+  - Body:
+    ```json
+    {
+      "bookingId": "67...",
+      "idempotencyKey": "PAY_IDEM_...",
+      "simulationAction": "success",
+      "paymentMethod": "simulated_card"
+    }
+    ```
+  - **Success Flow**:
+    - Validates 10-minute hold window (`holdExpiresAt > now`).
+    - Transitions `Booking.bookingStatus` from `pending_payment` to `confirmed`.
+    - Transitions all associated `BookingSeat.allocationStatus` to `confirmed`.
+    - Confirms `SeatInventory.activeSegments` status to `confirmed`.
+    - Generates unique `paymentReference` (`SIM_TXN_...`).
+    - Dispatches `BOOKING_CONFIRMED` notification and writes audit log.
+    - Idempotency Guarantee: Replaying the endpoint with the identical `idempotencyKey` on an already-confirmed booking returns 200 with `{ isDuplicate: true }` without redundant charges.
+  - **Failure Flow**:
+    - Marks `Payment.paymentStatus = 'failed'`.
+    - Transitions `Booking.bookingStatus = 'failed'`.
+    - Releases all `BookingSeat` records (`allocationStatus: 'released'`).
+    - Removes held segments from `SeatInventory.activeSegments`, instantly freeing seats.
+- `GET /api/payments/:paymentId` *(Protected: Customer owner / Admin)*
+  - Retrieves specific payment record with transaction details and timestamps.
+- `GET /api/payments/booking/:bookingId` *(Protected: Customer owner / Admin)*
+  - Retrieves payment status and history for a given booking.
+
+---
+
+### 3.12 Confirmed Ticket & Public PNR Verification
+- `GET /api/bookings/:bookingId/ticket` *(Protected: Customer owner / Admin)*
+  - Generates comprehensive electronic travel ticket.
+  - Returns complete route itinerary, boarding and dropping points with contact info, passenger manifest with allocated seat numbers, fare breakdown, payment transaction reference, active cancellation policy summary, and cryptographic QR payload string (`BUSGO|...`).
+- `GET /api/bookings/verify/:pnr` *(Public / Optional Authentication)*
+  - Public ticket verification endpoint for conductors and passengers.
+  - Masks sensitive user contact information (e.g. `98****3210`, `a***v@example.com`) to protect privacy while displaying journey itinerary, bus type, seat allocations, and validity.
+  - Returns 404 for invalid PNR.
+- `POST /api/bookings/cleanup-expired` *(Protected: Admin / Background Task)*
+  - Scans and cleans up stale `pending_payment` reservations whose 10-minute hold window expired.
+  - Transitions bookings and seats to `expired`, strips orphaned held segments from `SeatInventory.activeSegments`, and returns `{ cleanedCount, releasedSeats }`.
+
+---
+
+### 3.13 Partial & Full Cancellation Management (`/api/cancellations`)
+- `POST /api/bookings/:bookingId/cancel` *(Protected: Customer owner / Admin)*
+  - Processes selective seat cancellation or complete booking cancellation.
+  - Body:
+    ```json
+    {
+      "bookingSeatIds": ["67..."],
+      "reason": "Change of travel plans"
+    }
+    ```
+  - **Deduction Engine & Policy Snapshot**:
+    - Calculates exact hours until journey departure.
+    - Matches active tiered policy rules (>24h: 10% deduction, 12-24h: 25%, 2-12h: 50%, <2h: 100% non-cancellable).
+    - Snapshots the complete policy rules into `Cancellation.policySnapshot` for permanent immutability.
+    - Creates `Cancellation` and `CancellationItem` records.
+  - **Seat Release & Inventory Consistency**:
+    - Marks cancelled `BookingSeat` as `cancelled`.
+    - Unaffected seats remain `confirmed`.
+    - Releases cancelled segment `[fromSequence, toSequence)` from `SeatInventory.activeSegments`, enabling instant re-booking by other travelers.
+    - If all seats cancelled, transitions `Booking.bookingStatus` to `cancelled`; if partial, transitions to `partially_cancelled`.
+  - **Automatic Refund Generation**:
+    - If net refund > 0, generates a `Refund` record with `SIM_REF_...` reference.
+- `GET /api/bookings/:bookingId/cancellations` *(Protected: Customer owner / Admin)*
+  - Lists historical cancellation requests, deduction charges, and itemized passenger breakdowns for a booking.
+- `GET /api/cancellations/:cancellationId` *(Protected: Customer owner / Admin)*
+  - Retrieves detailed cancellation document by ID.
+
+---
+
+### 3.14 Simulated Refund Management (`/api/refunds`)
+- `GET /api/refunds/:refundId` *(Protected: Customer owner / Admin)*
+  - Retrieves refund status, reference, amount, and original payment linkage.
+- `GET /api/refunds/booking/:bookingId` *(Protected: Customer owner / Admin)*
+  - Lists all refund records associated with cancellations on a specific booking.
+- `GET /api/admin/refunds?status=...&page=...&limit=...` *(Protected: Admin)*
+  - Master administration listing of all system refunds with status filters.
+- `POST /api/admin/refunds/:refundId/simulate` *(Protected: Admin)*
+  - Simulates gateway refund fulfillment transitions (`completed`, `failed`, `processing`).
+  - Dispatches customer notification and records audit log.
+
+---
+
+### 3.15 Cancellation Policy Engine (`/api/admin/cancellation-policy`)
+- `GET /api/admin/cancellation-policy` *(Protected: Admin)*
+  - Retrieves active policy settings: cutoff window in hours, policy name, and deduction tiers.
+- `PUT /api/admin/cancellation-policy` *(Protected: Admin)*
+  - Updates departure cutoff hours and percentage tiers.
+  - Validates that deduction percentage + refund percentage equals exactly 100%.
+  - Records administrative audit trail.
+
+

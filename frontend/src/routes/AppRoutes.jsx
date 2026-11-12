@@ -35,6 +35,7 @@ import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminOperatorsPage from '../pages/admin/AdminOperatorsPage';
 import AdminStopsRoutesPage from '../pages/admin/AdminStopsRoutesPage';
 import AdminAuditLogsPage from '../pages/admin/AdminAuditLogsPage';
+import AdminBookingsRefundsPage from '../pages/admin/AdminBookingsRefundsPage';
 
 export default function AppRoutes() {
   return (
@@ -97,7 +98,7 @@ export default function AppRoutes() {
         <Route path="operators" element={<AdminOperatorsPage />} />
         <Route path="stops-routes" element={<AdminStopsRoutesPage />} />
         <Route path="trips" element={<AdminStopsRoutesPage />} />
-        <Route path="bookings" element={<AdminDashboardPage />} />
+        <Route path="bookings" element={<AdminBookingsRefundsPage />} />
         <Route path="audit-logs" element={<AdminAuditLogsPage />} />
       </Route>
 

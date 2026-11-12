@@ -53,7 +53,7 @@ tripSchema.pre('validate', function (next) {
   if (this.departureTime && this.arrivalTime && this.departureTime >= this.arrivalTime) {
     this.invalidate('arrivalTime', 'Arrival time must be after departure time.');
   }
-  next();
+  if (typeof next === 'function') next();
 });
 
 // Indexes

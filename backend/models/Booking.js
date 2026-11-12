@@ -57,7 +57,6 @@ const bookingSchema = new mongoose.Schema(
 );
 
 // Indexes
-bookingSchema.index({ pnr: 1 }, { unique: true });
 bookingSchema.index({ userId: 1, bookingDate: -1 });
 bookingSchema.index({ tripId: 1, bookingStatus: 1 });
 

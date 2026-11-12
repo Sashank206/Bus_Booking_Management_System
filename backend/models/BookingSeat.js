@@ -75,7 +75,7 @@ bookingSeatSchema.pre('validate', function (next) {
   if (this.fromSequence != null && this.toSequence != null && this.fromSequence >= this.toSequence) {
     this.invalidate('toSequence', 'Dropping stop sequence must be greater than boarding stop sequence.');
   }
-  next();
+  if (typeof next === 'function') next();
 });
 
 // Indexes (Note: DO NOT create a unique index on seatInventoryId, as segment reuse is permitted)

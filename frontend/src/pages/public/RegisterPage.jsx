@@ -123,7 +123,7 @@ export default function RegisterPage() {
             />
 
             <InputField
-              label="Mobile Number (Optional)"
+              label="Mobile Number "
               name="phone"
               type="tel"
               icon={Phone}
@@ -131,6 +131,7 @@ export default function RegisterPage() {
               value={formData.phone}
               onChange={handleChange}
               error={errors.phone}
+              required
             />
 
             <div className="pt-2">

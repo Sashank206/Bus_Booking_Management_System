@@ -44,7 +44,7 @@ routeSchema.pre('validate', function (next) {
   ) {
     this.invalidate('destinationStopId', 'Source and destination stops must be different.');
   }
-  next();
+  if (typeof next === 'function') next();
 });
 
 // Indexes

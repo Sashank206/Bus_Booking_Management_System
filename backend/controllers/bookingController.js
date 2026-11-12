@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 const {
+  User,
   Trip,
   TripStop,
   SeatInventory,
@@ -13,6 +14,30 @@ const {
 } = require('../models');
 const AppError = require('../utils/appError');
 const asyncHandler = require('../middleware/asyncHandler');
+const { getCancellationPolicy } = require('../services/policyService');
+
+/**
+ * Mask phone number for public privacy
+ */
+function maskPhone(phone) {
+  if (!phone) return 'N/A';
+  const clean = String(phone).trim();
+  if (clean.length <= 4) return '***';
+  return clean.slice(0, 2) + '*'.repeat(Math.max(1, clean.length - 6)) + clean.slice(-4);
+}
+
+/**
+ * Mask email address for public privacy
+ */
+function maskEmail(email) {
+  if (!email) return 'N/A';
+  const parts = String(email).trim().split('@');
+  if (parts.length !== 2) return '***';
+  const user = parts[0];
+  const domain = parts[1];
+  const maskedUser = user.length <= 2 ? user[0] + '***' : user[0] + '***' + user.slice(-1);
+  return `${maskedUser}@${domain}`;
+}
 
 /**
  * Generate a cryptographically random, unique alphanumeric PNR (6 to 12 chars)
@@ -575,11 +600,273 @@ const getBookingById = asyncHandler(async (req, res, next) => {
   });
 });
 
+/**
+ * Public/Safe PNR Ticket Verification Endpoint
+ * GET /api/bookings/verify/:pnr
+ */
+const verifyTicketByPNR = asyncHandler(async (req, res, next) => {
+  const { pnr } = req.params;
+  if (!pnr) {
+    return next(new AppError('PNR is required for ticket verification.', 400));
+  }
+
+  const booking = await Booking.findOne({ pnr: pnr.trim().toUpperCase() })
+    .populate({
+      path: 'tripId',
+      populate: [
+        { path: 'busId', select: 'busNumber registrationNumber busType amenities' },
+        { path: 'operatorId', select: 'companyName contactPerson' },
+        {
+          path: 'routeId',
+          populate: [
+            { path: 'sourceStopId', select: 'stopName city state' },
+            { path: 'destinationStopId', select: 'stopName city state' }
+          ]
+        }
+      ]
+    })
+    .populate('userId', 'name email phone');
+
+  if (!booking) {
+    return next(new AppError('No booking found for the provided PNR.', 404));
+  }
+
+  const [passengers, bookingSeats, payment] = await Promise.all([
+    Passenger.find({ bookingId: booking._id }).select('fullName gender age seatNumber'),
+    BookingSeat.find({ bookingId: booking._id })
+      .populate('boardingStopId', 'stopName city')
+      .populate('droppingStopId', 'stopName city'),
+    Payment.findOne({ bookingId: booking._id }).sort({ createdAt: -1 })
+  ]);
+
+  let userDoc = booking.userId;
+  if (!userDoc || !userDoc.email || !userDoc.phone) {
+    const rawUserId = userDoc?._id || userDoc;
+    if (rawUserId) {
+      const found = await User.findById(rawUserId);
+      if (found) userDoc = found;
+    }
+  }
+
+  // Mask sensitive user contact information to protect privacy on public verification
+  const isOwner =
+    req.user &&
+    (req.user._id?.toString() === (userDoc?._id || userDoc)?.toString() || req.user.role === 'admin');
+
+  const maskedContact = {
+    name: userDoc?.name || 'Customer',
+    email: isOwner ? userDoc?.email : maskEmail(userDoc?.email),
+    phone: isOwner ? userDoc?.phone : maskPhone(userDoc?.phone)
+  };
+
+  const verificationData = {
+    pnr: booking.pnr,
+    bookingStatus: booking.bookingStatus,
+    journeyDate: booking.journeyDate,
+    totalAmount: booking.totalAmount,
+    createdAt: booking.createdAt,
+    confirmedAt: booking.confirmedAt,
+    customer: maskedContact,
+    trip: {
+      tripId: booking.tripId?._id,
+      departureTime: booking.tripId?.departureTime,
+      arrivalTime: booking.tripId?.arrivalTime,
+      operatorName: booking.tripId?.operatorId?.companyName || 'BusGo Partner Operator',
+      busNumber: booking.tripId?.busId?.busNumber || 'N/A',
+      busType: booking.tripId?.busId?.busType || 'Standard',
+      sourceStop: booking.tripId?.routeId?.sourceStopId?.stopName,
+      sourceCity: booking.tripId?.routeId?.sourceStopId?.city,
+      destinationStop: booking.tripId?.routeId?.destinationStopId?.stopName,
+      destinationCity: booking.tripId?.routeId?.destinationStopId?.city
+    },
+    seats: bookingSeats.map((bs) => ({
+      seatNumber: bs.seatNumber,
+      status: bs.allocationStatus,
+      fare: bs.segmentFare,
+      boardingStop: bs.boardingStopId?.stopName,
+      droppingStop: bs.droppingStopId?.stopName
+    })),
+    passengers: passengers.map((p) => ({
+      fullName: p.fullName,
+      gender: p.gender,
+      age: p.age,
+      seatNumber: p.seatNumber
+    })),
+    payment: payment
+      ? {
+          paymentStatus: payment.paymentStatus,
+          paymentMethod: payment.paymentMethod,
+          paidAt: payment.paidAt
+        }
+      : null,
+    qrPayload: `BUSGO|${booking.pnr}|${booking.tripId?._id}|${booking.bookingStatus}|${booking.totalAmount}`
+  };
+
+  res.status(200).json({
+    status: 'success',
+    data: verificationData
+  });
+});
+
+/**
+ * Get Comprehensive Confirmed Ticket Details
+ * GET /api/bookings/:bookingId/ticket
+ */
+const getBookingTicket = asyncHandler(async (req, res, next) => {
+  const { bookingId } = req.params;
+
+  let booking;
+  if (mongoose.Types.ObjectId.isValid(bookingId)) {
+    booking = await Booking.findById(bookingId);
+  } else {
+    booking = await Booking.findOne({ pnr: bookingId.toUpperCase() });
+  }
+
+  if (!booking) {
+    return next(new AppError('Booking not found.', 404));
+  }
+
+  // Customer ownership check (or admin)
+  if (req.user.role !== 'admin' && booking.userId.toString() !== req.user._id.toString()) {
+    return next(new AppError('Forbidden. You do not have permission to access this ticket.', 403));
+  }
+
+  const [trip, passengers, bookingSeats, payment, bookingUser] = await Promise.all([
+    Trip.findById(booking.tripId)
+      .populate('busId', 'busNumber registrationNumber busType amenities')
+      .populate('operatorId', 'companyName registrationNumber contactPerson')
+      .populate({
+        path: 'routeId',
+        populate: [
+          { path: 'sourceStopId', select: 'stopName city state address' },
+          { path: 'destinationStopId', select: 'stopName city state address' }
+        ]
+      }),
+    Passenger.find({ bookingId: booking._id }),
+    BookingSeat.find({ bookingId: booking._id })
+      .populate('boardingStopId', 'stopName city state address')
+      .populate('droppingStopId', 'stopName city state address'),
+    Payment.findOne({ bookingId: booking._id }).sort({ createdAt: -1 }),
+    req.user
+  ]);
+
+  const policy = getCancellationPolicy();
+
+  const ticketData = {
+    ticketId: `TKT-${booking.pnr}`,
+    pnr: booking.pnr,
+    bookingStatus: booking.bookingStatus,
+    journeyDate: booking.journeyDate,
+    totalAmount: booking.totalAmount,
+    createdAt: booking.createdAt,
+    confirmedAt: booking.confirmedAt,
+    customer: {
+      userId: bookingUser._id,
+      name: bookingUser.name,
+      email: bookingUser.email,
+      phone: bookingUser.phone
+    },
+    trip: {
+      _id: trip?._id,
+      departureTime: trip?.departureTime,
+      arrivalTime: trip?.arrivalTime,
+      operatorName: trip?.operatorId?.companyName,
+      busNumber: trip?.busId?.busNumber,
+      registrationNumber: trip?.busId?.registrationNumber,
+      busType: trip?.busId?.busType,
+      amenities: trip?.busId?.amenities,
+      source: trip?.routeId?.sourceStopId,
+      destination: trip?.routeId?.destinationStopId
+    },
+    boardingStop: bookingSeats[0]?.boardingStopId || trip?.routeId?.sourceStopId,
+    droppingStop: bookingSeats[0]?.droppingStopId || trip?.routeId?.destinationStopId,
+    passengers,
+    bookingSeats,
+    payment,
+    policySummary: {
+      cutoffHours: policy.cutoffHours,
+      policyName: policy.policyName,
+      tiers: policy.tiers
+    },
+    qrPayload: `BUSGO|${booking.pnr}|${booking._id}|${booking.tripId}|${booking.totalAmount}|${booking.bookingStatus}`
+  };
+
+  res.status(200).json({
+    status: 'success',
+    data: ticketData
+  });
+});
+
+/**
+ * System/Cron: Cleanup Expired Pending Bookings and Release Seat Holds
+ * POST /api/bookings/cleanup-expired
+ */
+const cleanupExpiredBookings = asyncHandler(async (req, res, next) => {
+  const now = new Date();
+
+  // Find all pending_payment bookings whose hold has expired
+  const expiredBookings = await Booking.find({
+    bookingStatus: 'pending_payment',
+    holdExpiresAt: { $lt: now }
+  });
+
+  let releasedSeatsCount = 0;
+
+  for (const b of expiredBookings) {
+    b.bookingStatus = 'expired';
+    await b.save();
+
+    const seats = await BookingSeat.find({ bookingId: b._id, allocationStatus: 'held' });
+    for (const seat of seats) {
+      seat.allocationStatus = 'expired';
+      await seat.save();
+
+      const si = await SeatInventory.findById(seat.seatInventoryId);
+      if (si && Array.isArray(si.activeSegments)) {
+        si.activeSegments = si.activeSegments.filter(
+          (seg) => seg.bookingSeatId?.toString() !== seat._id.toString()
+        );
+        await si.save();
+        releasedSeatsCount++;
+      }
+    }
+  }
+
+  // Also clean up orphan holds in SeatInventory where holdExpiresAt < now and status === 'held'
+  const inventoriesWithExpiredHolds = await SeatInventory.find({
+    'activeSegments.status': 'held',
+    'activeSegments.holdExpiresAt': { $lt: now }
+  });
+
+  for (const inv of inventoriesWithExpiredHolds) {
+    const beforeCount = inv.activeSegments.length;
+    inv.activeSegments = inv.activeSegments.filter(
+      (seg) => !(seg.status === 'held' && seg.holdExpiresAt && new Date(seg.holdExpiresAt) < now)
+    );
+    if (inv.activeSegments.length !== beforeCount) {
+      releasedSeatsCount += beforeCount - inv.activeSegments.length;
+      await inv.save();
+    }
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: `Cleaned up ${expiredBookings.length} expired bookings and released ${releasedSeatsCount} seat segments.`,
+    data: {
+      cleanedCount: expiredBookings.length,
+      releasedSeats: releasedSeatsCount
+    }
+  });
+});
+
 module.exports = {
   holdSeats,
   releaseHold,
   createBooking,
   getMyBookings,
-  getBookingById
+  getBookingById,
+  verifyTicketByPNR,
+  getBookingTicket,
+  cleanupExpiredBookings
 };
 
