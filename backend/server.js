@@ -24,6 +24,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const cancellationRoutes = require('./routes/cancellationRoutes');
 const refundRoutes = require('./routes/refundRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -93,7 +94,8 @@ app.get('/', (req, res) => {
       bookings: '/api/bookings',
       payments: '/api/payments',
       cancellations: '/api/cancellations',
-      refunds: '/api/refunds'
+      refunds: '/api/refunds',
+      reports: '/api/reports'
     }
   });
 });
@@ -121,6 +123,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/cancellations', cancellationRoutes);
 app.use('/api/refunds', refundRoutes);
+app.use('/api/reports', reportRoutes);
 
 // 404 handler for unmatched routes
 app.use((req, res, next) => {

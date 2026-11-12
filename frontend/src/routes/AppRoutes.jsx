@@ -29,6 +29,8 @@ import OperatorDashboardPage from '../pages/operator/OperatorDashboardPage';
 import OperatorBusesPage from '../pages/operator/OperatorBusesPage';
 import OperatorTripsPage from '../pages/operator/OperatorTripsPage';
 import OperatorProfilePage from '../pages/operator/OperatorProfilePage';
+import TripManifestPage from '../pages/operator/TripManifestPage';
+import OperatorReportsPage from '../pages/operator/OperatorReportsPage';
 
 // Admin Pages
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
@@ -36,6 +38,7 @@ import AdminOperatorsPage from '../pages/admin/AdminOperatorsPage';
 import AdminStopsRoutesPage from '../pages/admin/AdminStopsRoutesPage';
 import AdminAuditLogsPage from '../pages/admin/AdminAuditLogsPage';
 import AdminBookingsRefundsPage from '../pages/admin/AdminBookingsRefundsPage';
+import AdminReportsPage from '../pages/admin/AdminReportsPage';
 
 export default function AppRoutes() {
   return (
@@ -79,8 +82,9 @@ export default function AppRoutes() {
         <Route path="dashboard" element={<OperatorDashboardPage />} />
         <Route path="buses" element={<OperatorBusesPage />} />
         <Route path="trips" element={<OperatorTripsPage />} />
-        <Route path="manifests" element={<OperatorTripsPage />} />
-        <Route path="reports" element={<OperatorDashboardPage />} />
+        <Route path="manifests" element={<TripManifestPage />} />
+        <Route path="manifests/:tripId" element={<TripManifestPage />} />
+        <Route path="reports" element={<OperatorReportsPage />} />
         <Route path="profile" element={<OperatorProfilePage />} />
       </Route>
 
@@ -95,6 +99,7 @@ export default function AppRoutes() {
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
+        <Route path="reports" element={<AdminReportsPage />} />
         <Route path="operators" element={<AdminOperatorsPage />} />
         <Route path="stops-routes" element={<AdminStopsRoutesPage />} />
         <Route path="trips" element={<AdminStopsRoutesPage />} />

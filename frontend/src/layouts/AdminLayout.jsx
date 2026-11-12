@@ -8,6 +8,7 @@ import {
   Calendar,
   CreditCard,
   FileText,
+  BarChart3,
   LogOut,
   Menu,
   X
@@ -30,6 +31,7 @@ export default function AdminLayout() {
 
   const navItems = [
     { label: 'System Overview', path: '/admin/dashboard', icon: LayoutDashboard },
+    { label: 'Reports & Analytics', path: '/admin/reports', icon: BarChart3 },
     { label: 'Operator Approvals', path: '/admin/operators', icon: Users },
     { label: 'Stops & Routes', path: '/admin/stops-routes', icon: MapPin },
     { label: 'Trips Master', path: '/admin/trips', icon: Calendar },

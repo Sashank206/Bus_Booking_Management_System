@@ -25,12 +25,16 @@ BusGo is structured as a **Modular Monolith**:
    - Business onboarding with required Administrator approval.
    - Fleet and bus seat layout configuration.
    - Trip scheduling with route stops and timing.
-   - Passenger manifests, occupancy tracking, and simulated revenue analytics.
+   - Boarding passenger manifests with seat assignments, print view, and CSV export.
+   - Fleet seat occupancy auditing and net revenue reconciliation.
    - Strict resource ownership isolation.
 3. **Administrator**:
    - Operator vetting and approval/rejection lifecycle.
    - System-wide stop and route network management.
-   - Global booking inspection, audit logs, and operational reports.
+   - Global executive analytics dashboard with date filtering (today, 7 days, 30 days, monthly, custom).
+   - Visual charts: booking trends over time, revenue trends, status distribution, bus occupancy overview.
+   - Comprehensive reports hub for trip occupancy, bookings master, payment collections, and cancellation refunds with RFC 4180 CSV exports.
+   - Audit trail and operational compliance.
 
 ---
 

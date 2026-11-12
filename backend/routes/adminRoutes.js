@@ -13,6 +13,15 @@ const {
   getCancellationPolicyConfig,
   updateCancellationPolicyConfig
 } = require('../controllers/adminController');
+const {
+  getAdminAnalyticsOverview,
+  getAdminAnalyticsBookings,
+  getAdminAnalyticsRevenue,
+  getAdminAnalyticsOperators,
+  getTripOccupancyReport,
+  getPassengerManifestReport,
+  getCancellationRefundReport
+} = require('../controllers/reportController');
 const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -36,5 +45,14 @@ router.post('/refunds/:refundId/simulate', simulateRefundStatus);
 router.get('/cancellation-policy', getCancellationPolicyConfig);
 router.put('/cancellation-policy', updateCancellationPolicyConfig);
 
-module.exports = router;
+// Phase 8: Reports, Analytics & Dashboard APIs
+router.get('/analytics/overview', getAdminAnalyticsOverview);
+router.get('/analytics/bookings', getAdminAnalyticsBookings);
+router.get('/analytics/revenue', getAdminAnalyticsRevenue);
+router.get('/analytics/operators', getAdminAnalyticsOperators);
+router.get('/reports/occupancy', getTripOccupancyReport);
+router.get('/reports/cancellations', getCancellationRefundReport);
+router.get('/reports/refunds', getCancellationRefundReport);
+router.get('/reports/trips/:tripId/manifest', getPassengerManifestReport);
 
+module.exports = router;

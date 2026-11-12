@@ -348,4 +348,54 @@ Base URL (Development): `http://localhost:5000/api`
   - Validates that deduction percentage + refund percentage equals exactly 100%.
   - Records administrative audit trail.
 
+---
+
+### 3.16 Reports, Analytics & Passenger Manifests (`/api/admin/analytics`, `/api/operator/analytics`, `/api/reports`)
+
+#### Admin Analytics Endpoints
+- `GET /api/admin/analytics/overview` *(Protected: Admin)*
+  - Query Parameters: `range` (`today`, `7days`, `30days`, `this_month`, `prev_month`, `custom`), `startDate`, `endDate`.
+  - Aggregates live system statistics: customer counts, operator counts (approved, pending), total buses, routes, trips, bookings (total, confirmed, cancelled).
+  - Financial math:
+    - `grossBookingRevenue`: Sum of successful payments.
+    - `totalRefunds`: Sum of non-failed refunds.
+    - `netRevenue`: `grossBookingRevenue - totalRefunds`.
+    - `pendingPaymentsAmount`, `failedPaymentsAmount` segregated.
+  - Visual analytics payload: daily booking trends, booking status distribution, bus occupancy overview, top operators, popular routes, monthly comparison.
+- `GET /api/admin/analytics/bookings` *(Protected: Admin)*
+  - Filters: `range`, `startDate`, `endDate`, `status`, `search`, `format=csv`.
+  - Detailed booking records or RFC 4180 CSV export.
+- `GET /api/admin/analytics/revenue` *(Protected: Admin)*
+  - Filters: `range`, `startDate`, `endDate`, `format=csv`.
+  - Reconciled payment logs, payment channel distribution, and financial export.
+- `GET /api/admin/analytics/operators` *(Protected: Admin)*
+  - Comprehensive operator metrics: fleet size, scheduled trips, total bookings, gross revenue.
+
+#### Operator Analytics Endpoints
+- `GET /api/operator/analytics/overview` *(Protected: Operator)*
+  - Scoped strictly to `req.operator._id`.
+  - Returns operator fleet counts (total and active), routes served, upcoming trips, completed trips, cancelled trips.
+  - Returns operator-specific bookings, confirmed passengers, gross revenue, refunds, net revenue, and average seat occupancy percentage.
+  - Time series charts and recent operational feed (bookings, upcoming trips, cancellations, refunds).
+- `GET /api/operator/analytics/bookings` *(Protected: Operator)*
+  - Operator-scoped bookings with optional `?format=csv`.
+- `GET /api/operator/analytics/revenue` *(Protected: Operator)*
+  - Operator-scoped revenue and settlements with optional `?format=csv`.
+
+#### Trip Occupancy & Passenger Manifest Reports
+- `GET /api/reports/occupancy` / `GET /api/admin/reports/occupancy` / `GET /api/operator/reports/occupancy` *(Protected: Admin / Operator)*
+  - Computes detailed occupancy per trip:
+    - Formula: $\text{Occupancy \%} = (\text{Confirmed Seats} / \text{Total Seats}) \times 100$.
+    - $\text{Available Seats} = \max(0, \text{Total Seats} - \text{Confirmed Seats} - \text{Held Seats})$.
+    - Held seats tracked separately.
+  - Filters: `range`, `tripId`, `routeId`, `operatorId` (admin), `search`, `page`, `limit`, `format=csv`.
+- `GET /api/reports/trips/:tripId/manifest` / `GET /api/operator/reports/trips/:tripId/manifest` *(Protected: Admin / Owning Operator)*
+  - Returns complete passenger manifest for a trip: PNR, passenger name, age, gender, seat number, boarding point, dropping point, booking status, contact info.
+  - Filters: `status` (`confirmed`, `cancelled`, `all`), `seat` (e.g. `1A`), `search` (name or PNR), `format=csv`.
+  - **Ownership Gate**: Non-owning operators receive 403 Forbidden.
+- `GET /api/admin/reports/cancellations` / `GET /api/reports/cancellations-refunds` *(Protected: Admin / Operator)*
+  - Summarizes cancellations count, full/partial split, total fee deductions, and refund status breakdown (`pending`, `processing`, `completed`, `failed`).
+  - Supports `?format=csv` download.
+
+
 

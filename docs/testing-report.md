@@ -287,6 +287,72 @@ BusGo employs a multi-tiered test strategy covering:
 | Rollback State | SeatInventory activeSegments remain untouched and consistent | `backend/models/SeatInventory.js` | PASS | 2026-11-12 |
 | Client Build | React 19 production build succeeds with Phase 7 components | `frontend/` | PASS (721ms) | 2026-11-12 |
 
+### Phase 8: Reports, Analytics & Dashboard Verification (61 Tests Passed)
+| Category | Test Case | Target | Result | Date |
+|---|---|---|---|---|
+| Admin Analytics | Fetches analytics overview with 200 OK | `GET /api/admin/analytics/overview` | PASS | 2026-11-12 |
+| Admin Analytics | Total registered customers count | `User.countDocuments({ role: 'customer' })` | PASS | 2026-11-12 |
+| Admin Analytics | Total registered operators count | `Operator.countDocuments()` | PASS | 2026-11-12 |
+| Admin Analytics | Total buses count | `Bus.countDocuments()` | PASS | 2026-11-12 |
+| Financial Math | Gross booking revenue from successful payments (₹4600) | `Payment.aggregate` | PASS | 2026-11-12 |
+| Financial Math | Total refunds from completed refunds (₹900) | `Refund.aggregate` | PASS | 2026-11-12 |
+| Financial Math | Net revenue strictly calculated as gross - refunds (₹3700) | `Math.max(0, gross - refunds)` | PASS | 2026-11-12 |
+| Financial Math | Failed payments segregated and excluded from net revenue | `backend/controllers/reportController.js` | PASS | 2026-11-12 |
+| Visual Analytics | Time series booking trends data array | `charts.bookingTrends` | PASS | 2026-11-12 |
+| Visual Analytics | Booking status distribution array | `charts.bookingStatusDistribution` | PASS | 2026-11-12 |
+| Date Filters | Preset `range=today` filtering | `parseDateRange` | PASS | 2026-11-12 |
+| Date Filters | Applies today date range label | `parseDateRange` | PASS | 2026-11-12 |
+| Date Filters | Preset `range=7days` filtering | `parseDateRange` | PASS | 2026-11-12 |
+| Date Filters | Custom valid date range (startDate & endDate) | `parseDateRange` | PASS | 2026-11-12 |
+| Date Filters | Rejects invalid date format with 400 Bad Request | `parseDateRange` | PASS | 2026-11-12 |
+| Date Filters | Rejects `startDate > endDate` with 400 Bad Request | `parseDateRange` | PASS | 2026-11-12 |
+| Operator Analytics | Operator fetches own analytics overview with 200 OK | `GET /api/operator/analytics/overview` | PASS | 2026-11-12 |
+| Operator Fleet | Operator-owned fleet count (1 bus) | `Bus.countDocuments({ operatorId })` | PASS | 2026-11-12 |
+| Operator Revenue | Gross revenue calculation for operator-owned trips | `backend/controllers/reportController.js` | PASS | 2026-11-12 |
+| Operator Occupancy | Valid average occupancy percentage calculation | `backend/controllers/reportController.js` | PASS | 2026-11-12 |
+| Operator Activity | Recent bookings activity list | `recentActivity.recentBookings` | PASS | 2026-11-12 |
+| RBAC Protection | Customer blocked from operator analytics with 403 Forbidden | `GET /api/operator/analytics/overview` | PASS | 2026-11-12 |
+| Occupancy Report | Admin fetches trip occupancy report with 200 OK | `GET /api/reports/occupancy` | PASS | 2026-11-12 |
+| Occupancy Rows | Occupancy report returns populated trip rows | `GET /api/reports/occupancy` | PASS | 2026-11-12 |
+| Occupancy Capacity | Accurate total seats capacity (30) | `totalSeats` | PASS | 2026-11-12 |
+| Occupancy Seats | Accurate confirmed seats count (2) | `confirmedSeats` | PASS | 2026-11-12 |
+| Occupancy Held | Held seats tracked separately from confirmed (1) | `heldSeats` | PASS | 2026-11-12 |
+| Occupancy Available | Available seats calculated as Total - Confirmed - Held (27) | `availableSeats` | PASS | 2026-11-12 |
+| Occupancy Math | Occupancy % calculated as (confirmed / total) * 100 (6.7%) | `occupancyPercentage` | PASS | 2026-11-12 |
+| Operator Isolation | Operator fetches own occupancy report with 200 OK | `GET /api/operator/reports/occupancy` | PASS | 2026-11-12 |
+| Operator Scoping | Operator occupancy report contains strictly own trips | `GET /api/operator/reports/occupancy` | PASS | 2026-11-12 |
+| Manifest Admin | Admin fetches passenger manifest with 200 OK | `GET /api/reports/trips/:id/manifest` | PASS | 2026-11-12 |
+| Manifest All | Manifest returns both confirmed and cancelled passengers | `GET /api/reports/trips/:id/manifest` | PASS | 2026-11-12 |
+| Manifest Owner | Owning operator accesses own manifest with 200 OK | `GET /api/operator/reports/trips/:id/manifest` | PASS | 2026-11-12 |
+| Manifest Isolation | Non-owning operator blocked with 403 Forbidden | `GET /api/reports/trips/:id/manifest` | PASS | 2026-11-12 |
+| Manifest Filter | Status filter `confirmed` returns only confirmed passengers | `GET /api/reports/trips/:id/manifest?status=confirmed` | PASS | 2026-11-12 |
+| Manifest Search | Searches manifest by passenger name successfully | `GET /api/reports/trips/:id/manifest?search=Pooja` | PASS | 2026-11-12 |
+| Manifest Seat | Filters manifest by seatNumber successfully | `GET /api/reports/trips/:id/manifest?seat=1A` | PASS | 2026-11-12 |
+| Refund Report | Admin fetches cancellations & refund report with 200 OK | `GET /api/admin/reports/cancellations` | PASS | 2026-11-12 |
+| Cancel Count | Calculates total cancellations count correctly | `totalCancellations` | PASS | 2026-11-12 |
+| Cancel Fee Math | Calculates total cancellation fee deduction correctly (₹100) | `totalCancellationCharges` | PASS | 2026-11-12 |
+| Refund Amount | Calculates total refund amount correctly (₹900) | `totalRefundAmount` | PASS | 2026-11-12 |
+| Refund Status | Tracks completed refunds in status breakdown | `statusBreakdown.completedCount` | PASS | 2026-11-12 |
+| Refund Search | Searches refund report by PNR successfully | `GET /api/admin/reports/refunds?search=...` | PASS | 2026-11-12 |
+| CSV Occupancy | Occupancy CSV export returns 200 OK | `GET /api/reports/occupancy?format=csv` | PASS | 2026-11-12 |
+| CSV Header Mime | Occupancy CSV response header has Content-Type `text/csv` | `res.headers['content-type']` | PASS | 2026-11-12 |
+| CSV Attachment | Occupancy CSV has attachment Content-Disposition header | `res.headers['content-disposition']` | PASS | 2026-11-12 |
+| CSV Header Row | Occupancy CSV includes valid RFC 4180 header row | `backend/utils/csvHelper.js` | PASS | 2026-11-12 |
+| CSV Manifest | Passenger Manifest CSV export returns 200 OK | `GET /api/reports/trips/:id/manifest?format=csv` | PASS | 2026-11-12 |
+| CSV Manifest Mime| Passenger Manifest CSV has Content-Type `text/csv` | `res.headers['content-type']` | PASS | 2026-11-12 |
+| CSV Manifest Row | Passenger Manifest CSV includes valid CSV header line | `backend/utils/csvHelper.js` | PASS | 2026-11-12 |
+| CSV Bookings | Admin Bookings CSV export returns 200 OK | `GET /api/admin/analytics/bookings?format=csv` | PASS | 2026-11-12 |
+| CSV Bookings Mime| Bookings CSV response has Content-Type `text/csv` | `res.headers['content-type']` | PASS | 2026-11-12 |
+| CSV Revenue | Admin Revenue CSV export returns 200 OK | `GET /api/admin/analytics/revenue?format=csv` | PASS | 2026-11-12 |
+| CSV Revenue Mime | Revenue CSV response has Content-Type `text/csv` | `res.headers['content-type']` | PASS | 2026-11-12 |
+| CSV Op Revenue | Operator Revenue CSV export returns 200 OK | `GET /api/operator/analytics/revenue?format=csv` | PASS | 2026-11-12 |
+| CSV Op Mime | Operator Revenue CSV has Content-Type `text/csv` | `res.headers['content-type']` | PASS | 2026-11-12 |
+| Empty DB Status | Empty database returns 200 OK without errors | `GET /api/admin/analytics/overview` | PASS | 2026-11-12 |
+| Empty DB Revenue | Returns 0 gross revenue when no payments exist | `grossBookingRevenue` | PASS | 2026-11-12 |
+| Empty DB Net | Returns 0 net revenue when no payments exist | `netRevenue` | PASS | 2026-11-12 |
+| Empty DB Occupy | Returns 0% average occupancy when no trips exist without NaN | `averageOccupancyPercentage` | PASS | 2026-11-12 |
+| Client Build | React 19 production build succeeds with Phase 8 components | `frontend/` | PASS (915ms) | 2026-11-12 |
+
 ---
 
 ### Combined Test Suite Summary
@@ -295,7 +361,8 @@ BusGo employs a multi-tiered test strategy covering:
 - Phase 5 Tests: **44 Passed** (Operator Approval, Fleet, Route, Schedules)
 - Phase 6 Tests: **46 Passed** (Search, Segment Intervals, Holds, Passenger Booking)
 - Phase 7 Tests: **105 Passed** (Simulated Payment, Ticket & PNR, Cancellations, Refunds, Policy Engine, Concurrency & Lifecycle)
-- Total Automated Backend Tests: **265**
-- Tests Passing: **265 (100%)**
+- Phase 8 Tests: **61 Passed** (Admin Analytics, Operator Analytics, Occupancy Formula, Passenger Manifest, Cancellation/Refund Reports, CSV Exports, Date Filters, Empty DB Graceful Handling)
+- Total Automated Backend Tests: **326**
+- Tests Passing: **326 (100%)**
 - Tests Failing: **0**
-- Frontend Production Build: **PASS (721ms, 0 errors, 2,172 modules)**
+- Frontend Production Build: **PASS (915ms, 0 errors, 2,177 modules)**
