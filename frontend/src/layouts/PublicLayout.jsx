@@ -322,7 +322,6 @@ export default function PublicLayout() {
         <Outlet />
       </main>
 
-      {/* Commercial RedBus / AbhiBus Grade Footer */}
       <footer className="bg-[#171C2B] text-[#98A2B3] border-t border-[#232A3E] mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
           {/* Top Row: Brand & Value Props */}

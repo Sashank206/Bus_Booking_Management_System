@@ -54,6 +54,11 @@
   background: #94A3B8;
 }
 
+/* Screen Mode: Never show the print portal */
+#busgo-print-portal {
+  display: none !important;
+}
+
 /* Print Styles for E-Ticket */
 @media print {
   @page {
@@ -72,42 +77,64 @@
     print-color-adjust: exact !important;
   }
 
-  /* When printing e-ticket, isolate print container */
-  body:has(#busgo-print-container) * {
-    visibility: hidden;
+  /* CRITICAL: When ticket modal is open, completely hide the application root */
+  body.has-print-ticket #root,
+  body:has(#busgo-print-portal > #busgo-print-document) #root,
+  body:has(#busgo-print-document) #root {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
   }
 
-  body:has(#busgo-print-container) #busgo-print-container,
-  body:has(#busgo-print-container) #busgo-print-container * {
-    visibility: visible;
+  /* Hide normal app layout framing and screen controls */
+  header,
+  footer,
+  nav,
+  aside,
+  .no-print,
+  button {
+    display: none !important;
   }
 
-  #busgo-print-container {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+  /* Dedicated 2-page print root */
+  body.has-print-ticket #busgo-print-portal,
+  body:has(#busgo-print-portal > #busgo-print-document) #busgo-print-portal,
+  #busgo-print-portal {
+    display: block !important;
+    visibility: visible !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #FFFFFF !important;
-    display: block !important;
-    box-shadow: none !important;
-    border: none !important;
   }
 
-  /* Page 1: Boarding Pass */
+  #busgo-print-document {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
+  }
+
+  /* Page 1: Official Boarding Pass */
   .ticket-print-page-1 {
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
+    page-break-before: auto !important;
     page-break-after: always !important;
     break-after: page !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     min-height: 265mm !important;
     max-height: 275mm !important;
+    height: 270mm !important;
     box-sizing: border-box !important;
-    padding-bottom: 5mm !important;
+    padding-bottom: 4mm !important;
+    overflow: hidden !important;
   }
 
   /* Page 2: Travel Rules, Policy & Privacy */
@@ -123,16 +150,9 @@
     break-inside: avoid !important;
     min-height: 265mm !important;
     max-height: 275mm !important;
+    height: 270mm !important;
     box-sizing: border-box !important;
-  }
-
-  .no-print,
-  button,
-  header,
-  footer,
-  nav,
-  aside {
-    display: none !important;
+    overflow: hidden !important;
   }
 
   .print\:p-0 {

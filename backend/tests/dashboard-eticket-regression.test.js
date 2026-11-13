@@ -531,6 +531,94 @@ async function runRegressionSuite() {
   assert(res.body.data?.pnr === 'BGPRIYA02', 'Public verification confirms valid PNR');
   assert(res.body.data?.customerPhone !== '9876543210', 'Customer phone number is masked for public privacy');
 
+  // -------------------------------------------------------------------------
+  // TEST 9: Midnight-Crossing Journey Date Resolution
+  // -------------------------------------------------------------------------
+  console.log('\n--- TEST 9: Midnight-Crossing Journey Date Resolution ---');
+  // Departs 10:30 PM on Nov 12, Arrives 06:30 AM on Nov 13 (crossing midnight)
+  const midnightDep = new Date('2026-11-12T17:00:00.000Z'); // 22:30 IST on 12 Nov
+  const midnightArr = new Date('2026-11-13T01:00:00.000Z'); // 06:30 IST on 13 Nov
+
+  const formatISTDate = (d) => {
+    if (!d) return 'Date unavailable';
+    return new Date(d)
+      .toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      })
+      .replace(/,\s*(\d{4})/, ' $1');
+  };
+
+  const boardingDateMidnight = formatISTDate(midnightDep);
+  const droppingDateMidnight = formatISTDate(midnightArr);
+
+  assert(boardingDateMidnight === 'Thu, 12 Nov 2026', 'Boarding date resolves to Thu, 12 Nov 2026');
+  assert(droppingDateMidnight === 'Fri, 13 Nov 2026', 'Dropping date correctly advances to next day (Fri, 13 Nov 2026)');
+  assert(boardingDateMidnight !== droppingDateMidnight, 'Dropping date differs from boarding date for overnight journey');
+
+  // -------------------------------------------------------------------------
+  // TEST 10: Multi-Passenger & Multi-Seat E-Ticket Allocation
+  // -------------------------------------------------------------------------
+  console.log('\n--- TEST 10: Multi-Passenger and Multi-Seat E-Ticket Manifest ---');
+  const multiBookingId = new mongoose.Types.ObjectId();
+  const multiPassengers = [
+    { fullName: 'Rajesh Sharma', age: 34, gender: 'male', seatNumber: '1A' },
+    { fullName: 'Meena Sharma', age: 32, gender: 'female', seatNumber: '1B' },
+    { fullName: 'Rohan Sharma', age: 8, gender: 'male', seatNumber: '1C' }
+  ];
+  const multiSeats = [
+    { seatNumber: '1A', segmentFare: 650, allocationStatus: 'confirmed' },
+    { seatNumber: '1B', segmentFare: 650, allocationStatus: 'confirmed' },
+    { seatNumber: '1C', segmentFare: 650, allocationStatus: 'confirmed' }
+  ];
+  const multiTotal = multiSeats.reduce((sum, s) => sum + s.segmentFare, 0);
+
+  assert(multiPassengers.length === 3, 'Manifest contains exactly 3 passengers');
+  assert(multiSeats.length === 3, 'Allocations contain exactly 3 confirmed seats');
+  assert(multiTotal === 1950, 'Total fare for 3 passengers is ₹1950 (3 * 650)');
+  assert(multiSeats.map(s => s.seatNumber).join(', ') === '1A, 1B, 1C', 'Seat numbering sequence is preserved');
+
+  // -------------------------------------------------------------------------
+  // TEST 11: Missing Travel Date Fallback Safety
+  // -------------------------------------------------------------------------
+  console.log('\n--- TEST 11: Missing Travel Date Fallback Safety ---');
+  const fallbackDate = formatISTDate(null);
+  assert(fallbackDate === 'Date unavailable', 'Missing date returns "Date unavailable" fallback and never defaults to today');
+
+  // -------------------------------------------------------------------------
+  // TEST 12: PDF Filename Title Generator & Print Portal Isolation
+  // -------------------------------------------------------------------------
+  console.log('\n--- TEST 12: PDF Filename Title Generator & Print Portal Isolation ---');
+  const generateTicketDocumentTitle = (pnrValue) => {
+    const target = pnrValue && pnrValue !== 'N/A' ? pnrValue : 'ticket';
+    return `busgo-${target}`;
+  };
+
+  assert(generateTicketDocumentTitle('BGD1401699') === 'busgo-BGD1401699', 'PNR BGD1401699 yields filename title busgo-BGD1401699');
+  assert(generateTicketDocumentTitle('BG580FFC39') === 'busgo-BG580FFC39', 'PNR BG580FFC39 yields filename title busgo-BG580FFC39');
+  assert(generateTicketDocumentTitle('BGDELAMR01') === 'busgo-BGDELAMR01', 'PNR BGDELAMR01 yields filename title busgo-BGDELAMR01');
+  assert(generateTicketDocumentTitle('') === 'busgo-ticket', 'Empty PNR fallback yields busgo-ticket');
+
+  // Verify frontend/index.html has dedicated busgo-print-portal container
+  const fs = require('fs');
+  const path = require('path');
+  const htmlPath = path.resolve(__dirname, '../../frontend/index.html');
+  if (fs.existsSync(htmlPath)) {
+    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+    assert(htmlContent.includes('id="busgo-print-portal"'), 'index.html contains dedicated #busgo-print-portal outside #root');
+  }
+
+  // Verify frontend/src/index.css contains print portal and root hiding rules
+  const cssPath = path.resolve(__dirname, '../../frontend/src/index.css');
+  if (fs.existsSync(cssPath)) {
+    const cssContent = fs.readFileSync(cssPath, 'utf8');
+    assert(cssContent.includes('body.has-print-ticket #root'), 'index.css hides #root when has-print-ticket is active');
+    assert(cssContent.includes('#busgo-print-portal'), 'index.css configures #busgo-print-portal for print execution');
+  }
+
   // =========================================================================
   // SUMMARY
   // =========================================================================

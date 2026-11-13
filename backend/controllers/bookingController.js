@@ -1101,7 +1101,7 @@ const getBookingTicket = asyncHandler(async (req, res, next) => {
     ticketId: `TKT-${booking.pnr}`,
     pnr: booking.pnr,
     bookingStatus: booking.bookingStatus,
-    journeyDate: booking.journeyDate,
+    journeyDate: trip?.travelDate || booking.journeyDate || trip?.departureTime || booking.bookingDate,
     totalAmount: booking.totalAmount,
     createdAt: booking.createdAt,
     confirmedAt: booking.confirmedAt,
@@ -1113,6 +1113,7 @@ const getBookingTicket = asyncHandler(async (req, res, next) => {
     },
     trip: {
       _id: trip?._id,
+      travelDate: trip?.travelDate,
       departureTime: trip?.departureTime,
       arrivalTime: trip?.arrivalTime,
       operatorName: trip?.operatorId?.companyName,

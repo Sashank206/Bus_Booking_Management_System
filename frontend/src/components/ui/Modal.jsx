@@ -40,23 +40,23 @@ export default function Modal({
   const resolvedWidth = maxWidth || sizeMap[size] || 'max-w-lg';
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto print:static print:inset-auto print:overflow-visible print:z-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-[#171C2B]/60 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-[#171C2B]/60 backdrop-blur-xs transition-opacity print:hidden"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal Dialog */}
-      <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center print:block print:p-0 print:m-0">
         <div
           role="dialog"
           aria-modal="true"
-          className={`relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all my-8 w-full ${resolvedWidth} border border-[#E4E7EC] ${className}`}
+          className={`relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all my-8 w-full ${resolvedWidth} border border-[#E4E7EC] print:static print:transform-none print:shadow-none print:border-none print:rounded-none print:m-0 print:p-0 print:w-full print:max-w-none print:overflow-visible ${className}`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[#F2F4F7]">
+          <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[#F2F4F7] print:hidden">
             <div>
               {title && (
                 <h3 className="text-base font-bold text-[#202633] tracking-tight">
@@ -76,7 +76,7 @@ export default function Modal({
           </div>
 
           {/* Body */}
-          <div className="p-5 sm:p-6">{children}</div>
+          <div className="p-5 sm:p-6 print:p-0">{children}</div>
         </div>
       </div>
     </div>
