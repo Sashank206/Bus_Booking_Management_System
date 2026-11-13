@@ -10,7 +10,8 @@ import {
   Clock,
   User,
   ArrowRight,
-  Lock
+  Lock,
+  Smartphone
 } from 'lucide-react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -26,7 +27,7 @@ export default function PaymentModal({
 }) {
   const toast = useToast();
   const [processing, setProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('simulated_card');
+  const [paymentMethod, setPaymentMethod] = useState('simulated_upi');
 
   if (!isOpen || !bookingData) return null;
 
@@ -88,18 +89,18 @@ export default function PaymentModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Secure Simulated Payment"
-      subtitle="Complete your bus reservation via the BusGo payment gateway simulator"
+      title="BusGo Secure Payment Simulation"
+      subtitle="Complete your bus ticket payment via simulated gateway"
       maxWidth="max-w-xl"
     >
       <div className="space-y-5">
         {/* Simulation Banner */}
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-start gap-2.5 text-xs text-amber-900">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-start gap-3 text-xs text-amber-950">
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-          <div>
-            <span className="font-bold block">Assessment Environment — Simulated Payment Only</span>
-            <span className="text-[11px] text-amber-800">
-              No real bank, credit card, or UPI transactions are performed. Do not enter real financial credentials. Choose to simulate either a successful payment or a gateway failure below.
+          <div className="space-y-0.5">
+            <span className="font-bold block">Developer Assessment Environment — Simulated Gateway</span>
+            <span className="text-[11px] text-amber-800 leading-relaxed block">
+              No real bank, credit card, or UPI charges will occur. Choose below whether to simulate a successful payment or a gateway rejection.
             </span>
           </div>
         </div>
@@ -108,26 +109,26 @@ export default function PaymentModal({
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 text-xs">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
             <div className="flex items-center gap-2">
-              <Bus className="w-4 h-4 text-slate-700" />
+              <Bus className="w-4 h-4 text-primary" />
               <span className="font-bold text-slate-900">{operator.companyName || 'Bus Operator'}</span>
               <span className="text-slate-400">({bus.busType || 'Standard'})</span>
             </div>
             <div className="font-mono font-bold text-slate-700">
-              PNR: <span className="text-slate-900 font-black">{booking.pnr}</span>
+              PNR: <span className="text-primary font-black">{booking.pnr}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-slate-600">
             <div>
               <span className="text-[10px] uppercase font-bold text-slate-400 block">Journey Date</span>
-              <span className="font-semibold text-slate-800">
+              <span className="font-semibold text-slate-900">
                 {formatDate(booking.journeyDate || trip.travelDate)}
               </span>
             </div>
 
             <div>
               <span className="text-[10px] uppercase font-bold text-slate-400 block">Selected Seats</span>
-              <span className="font-bold text-emerald-700 font-mono">
+              <span className="font-bold text-primary font-mono">
                 {bookingSeats.map((s) => s.seatNumber).join(', ') || 'Allocated'}
               </span>
             </div>
@@ -142,7 +143,7 @@ export default function PaymentModal({
                 {passengers.map((p, idx) => (
                   <span
                     key={p._id || idx}
-                    className="bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-700 font-medium text-[11px]"
+                    className="bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-700 font-medium text-[11px]"
                   >
                     {p.fullName} ({p.gender}, {p.age}y)
                   </span>
@@ -155,28 +156,30 @@ export default function PaymentModal({
         {/* Simulated Payment Method Selection */}
         <div className="space-y-2">
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
-            Simulated Payment Method
+            Select Payment Method
           </label>
-          <div className="grid grid-cols-3 gap-2 text-xs">
+          <div className="grid grid-cols-3 gap-2.5 text-xs">
             {[
-              { id: 'simulated_card', label: 'Simulated Card', icon: CreditCard },
-              { id: 'simulated_upi', label: 'Simulated UPI', icon: ShieldCheck },
-              { id: 'simulated_netbanking', label: 'Net Banking', icon: Lock }
+              { id: 'simulated_upi', label: 'UPI / QR Code', icon: Smartphone, desc: 'GPay, PhonePe, Paytm' },
+              { id: 'simulated_card', label: 'Debit / Credit Card', icon: CreditCard, desc: 'Visa, Master, RuPay' },
+              { id: 'simulated_netbanking', label: 'Net Banking', icon: Lock, desc: 'All Indian Banks' }
             ].map((method) => {
               const Icon = method.icon;
+              const isSelected = paymentMethod === method.id;
               return (
                 <button
                   key={method.id}
                   type="button"
                   onClick={() => setPaymentMethod(method.id)}
-                  className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-colors ${
-                    paymentMethod === method.id
-                      ? 'border-slate-900 bg-slate-900 text-white font-bold'
+                  className={`p-3 rounded-xl border text-center flex flex-col items-center justify-center gap-1.5 transition-all ${
+                    isSelected
+                      ? 'border-primary bg-primary/5 text-primary font-bold shadow-xs ring-1 ring-primary'
                       : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-[11px]">{method.label}</span>
+                  <Icon className={`w-4 h-4 ${isSelected ? 'text-primary' : 'text-slate-500'}`} />
+                  <span className="text-xs font-bold block">{method.label}</span>
+                  <span className="text-[10px] text-slate-400 font-normal">{method.desc}</span>
                 </button>
               );
             })}
@@ -184,10 +187,10 @@ export default function PaymentModal({
         </div>
 
         {/* Fare Total Display */}
-        <div className="bg-slate-900 text-white rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-navy text-white rounded-xl p-4 flex items-center justify-between shadow-sm">
           <div>
-            <span className="text-xs text-slate-400 block font-semibold">Total Amount Due</span>
-            <span className="text-[11px] text-slate-400">All taxes and fees included</span>
+            <span className="text-xs text-slate-300 block font-semibold">Total Amount Due</span>
+            <span className="text-[11px] text-slate-400">All convenience fees & taxes included</span>
           </div>
           <div className="text-right">
             <span className="text-2xl font-black text-amber-400 font-mono">
@@ -200,9 +203,9 @@ export default function PaymentModal({
         <div className="space-y-2 pt-2">
           <Button
             type="button"
-            variant="accent"
+            variant="success"
             size="lg"
-            className="w-full justify-center text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="w-full justify-center text-sm font-bold shadow-sm"
             onClick={() => handleSimulatePayment('success')}
             loading={processing}
             disabled={processing}
@@ -221,11 +224,10 @@ export default function PaymentModal({
             disabled={processing}
             icon={XCircle}
           >
-            Simulate Payment Failure
+            Simulate Payment Failure & Release Hold
           </Button>
         </div>
       </div>
     </Modal>
   );
 }
-

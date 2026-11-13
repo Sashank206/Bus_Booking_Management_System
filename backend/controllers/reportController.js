@@ -13,6 +13,7 @@ const {
   CancellationItem,
   Refund
 } = require('../models');
+const ArchivedSeatInventory = require('../models/ArchivedSeatInventory');
 const AppError = require('../utils/appError');
 const asyncHandler = require('../middleware/asyncHandler');
 const { parseDateRange } = require('../utils/dateFilter');
@@ -977,9 +978,22 @@ const getTripOccupancyReport = asyncHandler(async (req, res, next) => {
         SeatInventory.find({ tripId: trip._id, isActive: true })
       ]);
 
+      // If active seat inventory has been archived for a historical/completed trip, fallback to ArchivedSeatInventory
+      let effectiveSeatInventories = seatInventories;
+      if ((!effectiveSeatInventories || effectiveSeatInventories.length === 0) && trip.tripStatus === 'completed') {
+        const mongoose = require('mongoose');
+        if (mongoose.connection.readyState === 1 || ArchivedSeatInventory.find !== mongoose.Model.find) {
+          try {
+            effectiveSeatInventories = await ArchivedSeatInventory.find({ tripId: trip._id });
+          } catch (e) {
+            effectiveSeatInventories = [];
+          }
+        }
+      }
+
       // Collect active held segments
       const activeHolds = [];
-      for (const si of seatInventories) {
+      for (const si of effectiveSeatInventories) {
         for (const seg of si.activeSegments || []) {
           if (seg.status === 'held' && seg.holdExpiresAt && new Date(seg.holdExpiresAt) > now) {
             activeHolds.push({
@@ -1101,6 +1115,7 @@ const getTripOccupancyReport = asyncHandler(async (req, res, next) => {
         arrivalTime: trip.arrivalTime,
         tripStatus: trip.tripStatus,
         totalSeats,
+        totalPhysicalSeats: totalSeats,
         confirmedSeats: peakSimultaneousOccupied,
         heldSeats: peakHeld,
         availableSeats: minAvailableSeats,

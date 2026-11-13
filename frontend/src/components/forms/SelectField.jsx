@@ -24,16 +24,16 @@ const SelectField = forwardRef(function SelectField(
       {label && (
         <label
           htmlFor={selectId}
-          className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+          className="block text-xs font-bold text-[#344054] uppercase tracking-wider mb-1.5"
         >
           {label}
-          {required && <span className="text-rose-500 ml-1">*</span>}
+          {required && <span className="text-[#D92D3A] ml-1">*</span>}
         </label>
       )}
 
-      <div className="relative rounded-lg shadow-xs">
+      <div className="relative rounded-lg sm:rounded-xl shadow-xs">
         {Icon && (
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#98A2B3]">
             <Icon className="w-4 h-4" />
           </div>
         )}
@@ -43,12 +43,12 @@ const SelectField = forwardRef(function SelectField(
           id={selectId}
           name={name}
           required={required}
-          className={`block w-full rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 ${
-            Icon ? 'pl-9' : 'pl-3.5'
+          className={`block w-full rounded-lg sm:rounded-xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-[#D92D3A]/20 focus:border-[#D92D3A] ${
+            Icon ? 'pl-10' : 'pl-3.5'
           } pr-9 py-2.5 bg-white appearance-none cursor-pointer ${
             error
-              ? 'border-rose-300 text-rose-900 focus:border-rose-500 focus:ring-rose-500 bg-rose-50/20'
-              : 'border-slate-300 text-slate-900 focus:border-slate-900 focus:ring-slate-900'
+              ? 'border-[#FDA29B] text-[#B42318] focus:border-[#D92D3A] focus:ring-[#D92D3A]/20 bg-[#FEF3F2]/40'
+              : 'border-[#D0D5DD] text-[#202633]'
           }`}
           {...props}
         >
@@ -65,7 +65,7 @@ const SelectField = forwardRef(function SelectField(
         </select>
 
         {/* Custom dropdown chevron */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#667085]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
           </svg>
@@ -73,16 +73,15 @@ const SelectField = forwardRef(function SelectField(
       </div>
 
       {error ? (
-        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-rose-600">
+        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-[#D92D3A] font-medium">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           <span>{error}</span>
         </div>
       ) : helperText ? (
-        <p className="mt-1 text-xs text-slate-500">{helperText}</p>
+        <p className="mt-1.5 text-xs text-[#667085]">{helperText}</p>
       ) : null}
     </div>
   );
 });
 
 export default SelectField;
-

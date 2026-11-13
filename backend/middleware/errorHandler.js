@@ -14,8 +14,21 @@ const handleCastErrorDB = (err) => {
 const handleDuplicateFieldsDB = (err) => {
   const field = Object.keys(err.keyValue || {})[0] || 'field';
   const value = err.keyValue ? err.keyValue[field] : '';
-  const message = `Duplicate value: '${value}' for '${field}'. Please use another value.`;
-  return new AppError(message, 409, { [field]: `${field} already exists` });
+  let conflictCode = 'BOOKING_CONFLICT';
+  let message = `Duplicate value: '${value}' for '${field}'. Please use another value.`;
+
+  if (field === 'idempotencyKey') {
+    conflictCode = 'IDEMPOTENCY_KEY_CONFLICT';
+    message = 'This idempotency key has already been used for a different booking transaction.';
+  } else if (field === 'holdToken') {
+    conflictCode = 'BOOKING_ALREADY_PROCESSED';
+    message = 'Your booking is already being processed. Please check My Bookings.';
+  } else if (field === 'pnr') {
+    conflictCode = 'BOOKING_CONFLICT';
+    message = 'Booking reference conflict. Please retry your reservation.';
+  }
+
+  return new AppError(message, 409, { [field]: `${field} already exists` }, conflictCode);
 };
 
 /**
@@ -50,6 +63,8 @@ const handleJWTExpiredError = () => {
 const sendErrorDev = (err, req, res) => {
   res.status(err.statusCode).json({
     status: err.status,
+    success: false,
+    code: err.code || undefined,
     message: err.message,
     errors: err.errors || null,
     stack: err.stack,
@@ -65,6 +80,8 @@ const sendErrorProd = (err, req, res) => {
   if (err.isOperational) {
     return res.status(err.statusCode).json({
       status: err.status,
+      success: false,
+      code: err.code || undefined,
       message: err.message,
       errors: err.errors || null
     });
@@ -74,6 +91,7 @@ const sendErrorProd = (err, req, res) => {
   console.error('[CRITICAL UNHANDLED ERROR]', err);
   res.status(500).json({
     status: 'error',
+    success: false,
     message: 'An unexpected internal server error occurred.'
   });
 };
@@ -85,16 +103,18 @@ const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
-  let error = { ...err };
-  error.message = err.message;
-  error.name = err.name;
-  error.code = err.code;
+  let error = err;
 
   if (err.name === 'CastError') error = handleCastErrorDB(err);
   if (err.code === 11000) error = handleDuplicateFieldsDB(err);
   if (err.name === 'ValidationError') error = handleValidationErrorDB(err);
   if (err.name === 'JsonWebTokenError') error = handleJWTError();
   if (err.name === 'TokenExpiredError') error = handleJWTExpiredError();
+
+  error.statusCode = error.statusCode || err.statusCode || 500;
+  error.status = error.status || err.status || 'error';
+  error.message = error.message || err.message;
+  error.code = error.code || err.code;
 
   if (process.env.NODE_ENV === 'production') {
     sendErrorProd(error, req, res);

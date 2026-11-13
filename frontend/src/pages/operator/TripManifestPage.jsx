@@ -101,16 +101,16 @@ export default function TripManifestPage() {
       {/* Action / Title Bar (Hidden in Print) */}
       <div className="print:hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <FileText className="w-6 h-6 text-blue-600" />
+          <h1 className="text-2xl font-black text-navy tracking-tight flex items-center gap-2">
+            <FileText className="w-6 h-6 text-primary" />
             Passenger Boarding Manifest
           </h1>
-          <p className="text-sm text-slate-500">
-            Official passenger roster, seat assignments, and boarding verification.
+          <p className="text-xs sm:text-sm text-slate-500 font-medium">
+            Official passenger roster, seat assignments, and boarding verification checklist.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           {/* Trip Selector Dropdown */}
           <select
             value={selectedTripId}
@@ -118,7 +118,7 @@ export default function TripManifestPage() {
               setSelectedTripId(e.target.value);
               navigate(`/operator/manifests/${e.target.value}`);
             }}
-            className="px-3 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white shadow-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+            className="px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-bold text-navy bg-white shadow-2xs focus:ring-2 focus:ring-primary focus:outline-none"
           >
             <option value="">Select a Trip...</option>
             {trips.map((t) => (
@@ -130,11 +130,11 @@ export default function TripManifestPage() {
           </select>
 
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={handleExportCSV}
             disabled={!selectedTripId || passengers.length === 0}
-            className="gap-1.5"
+            className="gap-1.5 font-bold"
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -145,7 +145,7 @@ export default function TripManifestPage() {
             size="sm"
             onClick={handlePrint}
             disabled={!selectedTripId || passengers.length === 0}
-            className="gap-1.5"
+            className="gap-1.5 font-bold shadow-xs"
           >
             <Printer className="w-4 h-4" />
             Print Manifest
@@ -157,8 +157,8 @@ export default function TripManifestPage() {
       <div className="hidden print:block border-b-2 border-slate-900 pb-4 mb-4">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-bold uppercase tracking-wider text-slate-900">
-              BusGo Passenger Manifest
+            <h1 className="text-xl font-black uppercase tracking-wider text-slate-900">
+              BusGo Official Passenger Manifest
             </h1>
             <p className="text-xs text-slate-600">
               Carrier: {tripInfo?.operator?.companyName || 'Bus Operator'} | Generated:{' '}
@@ -177,28 +177,28 @@ export default function TripManifestPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="p-4 border-slate-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
                 <Bus className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-semibold uppercase">Bus & Route</p>
-                <p className="text-sm font-bold text-slate-800">{tripInfo.bus?.busNumber}</p>
-                <p className="text-xs text-slate-500 truncate">{tripInfo.route?.routeName}</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase">Bus & Route</p>
+                <p className="text-sm font-black text-navy">{tripInfo.bus?.busNumber}</p>
+                <p className="text-xs text-slate-500 font-medium truncate">{tripInfo.route?.routeName}</p>
               </div>
             </div>
           </Card>
 
           <Card className="p-4 border-slate-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-navy/10 text-navy flex items-center justify-center font-bold">
                 <Calendar className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-semibold uppercase">Departure</p>
-                <p className="text-sm font-bold text-slate-800">
+                <p className="text-[10px] text-slate-400 font-bold uppercase">Departure Date</p>
+                <p className="text-sm font-black text-navy">
                   {new Date(tripInfo.departureTime).toLocaleDateString()}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 font-mono">
                   {new Date(tripInfo.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
@@ -207,16 +207,16 @@ export default function TripManifestPage() {
 
           <Card className="p-4 border-slate-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
                 <CheckCircle className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-semibold uppercase">Confirmed Boarding</p>
-                <p className="text-sm font-bold text-slate-800">
+                <p className="text-[10px] text-slate-400 font-bold uppercase">Confirmed Seats</p>
+                <p className="text-sm font-black text-navy">
                   {summary.confirmedCount} / {summary.totalSeats} Seats
                 </p>
-                <p className="text-xs text-emerald-600 font-medium">
-                  {Math.round((summary.confirmedCount / (summary.totalSeats || 1)) * 100)}% Booked
+                <p className="text-xs text-emerald-700 font-bold">
+                  {Math.round((summary.confirmedCount / (summary.totalSeats || 1)) * 100)}% Occupancy
                 </p>
               </div>
             </div>
@@ -224,13 +224,13 @@ export default function TripManifestPage() {
 
           <Card className="p-4 border-slate-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
                 <XCircle className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-semibold uppercase">Cancelled Seats</p>
-                <p className="text-sm font-bold text-slate-800">{summary.cancelledCount}</p>
-                <p className="text-xs text-slate-400">Available for re-allocation</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase">Cancelled Seats</p>
+                <p className="text-sm font-black text-navy">{summary.cancelledCount}</p>
+                <p className="text-xs text-slate-400 font-medium">Available for re-allocation</p>
               </div>
             </div>
           </Card>
@@ -238,7 +238,7 @@ export default function TripManifestPage() {
       )}
 
       {/* Filter & Search Bar (Hidden in Print) */}
-      <div className="print:hidden bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="print:hidden bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -247,7 +247,7 @@ export default function TripManifestPage() {
               placeholder="Search by Passenger Name or PNR..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+              className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary focus:outline-none"
             />
           </div>
 
@@ -256,12 +256,12 @@ export default function TripManifestPage() {
             placeholder="Seat (e.g. 1A)"
             value={seatFilter}
             onChange={(e) => setSeatFilter(e.target.value)}
-            className="w-24 px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+            className="w-28 px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary focus:outline-none"
           />
         </div>
 
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">
             Status:
           </span>
           {['all', 'confirmed', 'cancelled'].map((st) => (
@@ -269,9 +269,9 @@ export default function TripManifestPage() {
               key={st}
               type="button"
               onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-lg text-xs capitalize font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs capitalize font-bold transition-all ${
                 statusFilter === st
-                  ? 'bg-blue-600 text-white shadow-xs font-semibold'
+                  ? 'bg-primary text-white shadow-2xs'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
@@ -283,7 +283,7 @@ export default function TripManifestPage() {
 
       {/* Manifest Passenger Table */}
       {loading ? (
-        <LoadingSkeleton rows={6} />
+        <LoadingSkeleton count={4} />
       ) : passengers.length === 0 ? (
         <EmptyState
           title="No Passengers on Manifest"
@@ -294,10 +294,10 @@ export default function TripManifestPage() {
           }
         />
       ) : (
-        <div className="overflow-hidden border border-slate-200/90 rounded-xl bg-white shadow-xs print:border-none print:shadow-none">
+        <div className="overflow-hidden border border-slate-200 rounded-2xl bg-white shadow-xs print:border-none print:shadow-none">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
-              <thead className="bg-slate-50/80 font-bold uppercase tracking-wider text-slate-500 print:bg-slate-100">
+              <thead className="bg-slate-50 font-bold uppercase tracking-wider text-slate-600 print:bg-slate-100">
                 <tr>
                   <th className="px-4 py-3">Seat</th>
                   <th className="px-4 py-3">PNR</th>
@@ -315,19 +315,19 @@ export default function TripManifestPage() {
                 {passengers.map((p, idx) => (
                   <tr
                     key={p.bookingSeatId || idx}
-                    className={`hover:bg-slate-50/70 transition-colors ${
+                    className={`hover:bg-slate-50 transition-colors ${
                       p.status === 'cancelled' ? 'opacity-60 bg-rose-50/30' : ''
                     }`}
                   >
-                    <td className="px-4 py-3 font-bold text-slate-900">
-                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-700 font-bold border border-blue-200">
+                    <td className="px-4 py-3 font-bold text-navy">
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary font-mono font-bold">
                         {p.seatNumber}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono font-semibold text-slate-800">
+                    <td className="px-4 py-3 font-mono font-bold text-navy">
                       {p.pnr}
                     </td>
-                    <td className="px-4 py-3 font-semibold text-slate-900">
+                    <td className="px-4 py-3 font-bold text-navy">
                       {p.passengerName}
                     </td>
                     <td className="px-4 py-3 text-slate-600">
@@ -346,7 +346,7 @@ export default function TripManifestPage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={p.status} />
                     </td>
-                    <td className="px-4 py-3 font-semibold text-slate-900 print:hidden">
+                    <td className="px-4 py-3 font-bold text-navy font-mono print:hidden">
                       ₹{p.fare}
                     </td>
                     <td className="px-4 py-3 text-center hidden print:table-cell">
@@ -362,4 +362,3 @@ export default function TripManifestPage() {
     </div>
   );
 }
-

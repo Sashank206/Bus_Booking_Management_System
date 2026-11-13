@@ -4,52 +4,56 @@ export default function StatCard({
   icon: Icon,
   description,
   trend,
-  color = 'blue',
+  color = 'red',
   className = ''
 }) {
   const colorMap = {
-    blue: 'bg-blue-50 text-blue-600',
-    amber: 'bg-amber-50 text-amber-600',
-    emerald: 'bg-emerald-50 text-emerald-600',
-    purple: 'bg-purple-50 text-purple-600',
-    rose: 'bg-rose-50 text-rose-600',
-    slate: 'bg-slate-100 text-slate-700'
+    red: 'bg-[#FFF1F2] text-[#D92D3A] border-[#FECDD3]',
+    navy: 'bg-[#F0F2F5] text-[#171C2B] border-[#D0D5DD]',
+    emerald: 'bg-[#ECFDF3] text-[#16865C] border-[#ABEFC6]',
+    amber: 'bg-[#FFFAEB] text-[#B54708] border-[#FEDF89]',
+    purple: 'bg-[#F4F3FF] text-[#5925DC] border-[#D9D6FE]',
+    blue: 'bg-[#EFF8FF] text-[#175CD3] border-[#B2DDFF]',
+    slate: 'bg-[#F8F9FA] text-[#344054] border-[#EAECF0]'
   };
 
   return (
     <div
-      className={`bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs flex items-start justify-between gap-4 ${className}`}
+      className={`bg-white rounded-xl sm:rounded-2xl border border-[#E4E7EC] p-5 shadow-[0_1px_3px_0_rgba(16,24,40,0.05)] flex items-start justify-between gap-4 transition-all hover:border-[#D0D5DD] ${className}`}
     >
-      <div>
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">
+      <div className="space-y-1.5 flex-1 min-w-0">
+        <span className="text-xs font-semibold uppercase tracking-wider text-[#667085] block truncate">
           {title}
         </span>
-        <span className="text-2xl font-extrabold text-slate-900 tracking-tight block">
+        <span className="text-2xl sm:text-3xl font-extrabold text-[#202633] tracking-tight block truncate">
           {value}
         </span>
 
         {(description || trend) && (
-          <div className="flex items-center gap-2 mt-2 text-xs">
+          <div className="flex items-center flex-wrap gap-2 pt-1 text-xs">
             {trend && (
               <span
-                className={`font-semibold ${
-                  trend.isPositive ? 'text-emerald-600' : 'text-rose-600'
+                className={`font-bold inline-flex items-center gap-0.5 ${
+                  trend.isPositive ? 'text-[#16865C]' : 'text-[#D92D3A]'
                 }`}
               >
                 {trend.isPositive ? '↑' : '↓'} {trend.label}
               </span>
             )}
-            {description && <span className="text-slate-500">{description}</span>}
+            {description && <span className="text-[#667085] truncate">{description}</span>}
           </div>
         )}
       </div>
 
       {Icon && (
-        <div className={`p-3 rounded-xl shrink-0 ${colorMap[color] || colorMap.blue}`}>
-          <Icon className="w-6 h-6" />
+        <div
+          className={`p-3 rounded-xl border shrink-0 ${
+            colorMap[color] || colorMap.red
+          }`}
+        >
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
         </div>
       )}
     </div>
   );
 }
-

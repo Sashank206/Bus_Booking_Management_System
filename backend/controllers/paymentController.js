@@ -71,7 +71,9 @@ const simulatePayment = asyncHandler(async (req, res, next) => {
     return next(
       new AppError(
         'This idempotency key has already been used for a different booking transaction.',
-        409
+        409,
+        null,
+        'IDEMPOTENCY_KEY_CONFLICT'
       )
     );
   }

@@ -9,7 +9,9 @@ import {
   FileBadge,
   MapPin,
   User,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import useToast from '../../hooks/useToast';
@@ -31,6 +33,7 @@ export default function OperatorRegisterPage() {
     businessAddress: '',
     contactPerson: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -86,31 +89,31 @@ export default function OperatorRegisterPage() {
         {/* Header */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 font-bold shadow-xs">
+            <div className="w-11 h-11 rounded-2xl bg-primary flex items-center justify-center text-white font-bold shadow-xs">
               <Bus className="w-6 h-6" />
             </div>
-            <span className="text-2xl font-extrabold tracking-tight text-slate-900">
-              Bus<span className="text-amber-500">Go</span>
+            <span className="text-2xl font-black tracking-tight text-navy">
+              Bus<span className="text-primary">Go</span>
             </span>
           </Link>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-2xl font-black text-navy tracking-tight">
             Bus Operator Partner Registration
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Publish bus schedules, configure seating layouts, and manage bookings.
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Publish bus schedules, configure seating layouts, and manage bookings across Indian routes.
           </p>
         </div>
 
         {/* Notice Card */}
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200/80 flex items-start gap-3 text-xs text-amber-900">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-          <p>
-            <strong>Administrative Review Required:</strong> All new operator applications are reviewed by platform administrators before trips can be published for passenger booking.
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-xs text-amber-950">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <p className="leading-relaxed">
+            <strong className="font-bold">Administrative Review Required:</strong> All operator applications undergo compliance verification by platform administrators before trips can be published for passenger booking.
           </p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-7 shadow-lg">
+        <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <InputField
@@ -177,17 +180,27 @@ export default function OperatorRegisterPage() {
                 required
               />
 
-              <InputField
-                label="Password"
-                name="password"
-                type="password"
-                icon={Lock}
-                placeholder="At least 6 characters"
-                value={formData.password}
-                onChange={handleChange}
-                error={errors.password}
-                required
-              />
+              <div className="relative">
+                <InputField
+                  label="Password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  icon={Lock}
+                  placeholder="At least 6 characters"
+                  value={formData.password}
+                  onChange={handleChange}
+                  error={errors.password}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-9 text-slate-400 hover:text-slate-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <InputField
@@ -208,7 +221,7 @@ export default function OperatorRegisterPage() {
                 variant="primary"
                 size="md"
                 loading={loading}
-                className="w-full"
+                className="w-full font-bold shadow-xs"
                 icon={Building2}
               >
                 Submit Operator Application
@@ -220,7 +233,7 @@ export default function OperatorRegisterPage() {
         {/* Footer */}
         <div className="text-center text-xs text-slate-500">
           Already registered as an operator?{' '}
-          <Link to="/login" className="font-semibold text-slate-900 hover:underline">
+          <Link to="/login" className="font-bold text-primary hover:underline">
             Sign In here
           </Link>
         </div>
@@ -228,4 +241,3 @@ export default function OperatorRegisterPage() {
     </div>
   );
 }
-

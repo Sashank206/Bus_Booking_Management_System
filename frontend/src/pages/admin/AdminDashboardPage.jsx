@@ -16,7 +16,8 @@ import {
   Activity,
   TrendingUp,
   Percent,
-  TrendingDown
+  TrendingDown,
+  ShieldCheck
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import useToast from '../../hooks/useToast';
@@ -126,27 +127,27 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-950 via-purple-950 to-slate-900 text-white rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      <div className="bg-navy text-white rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs uppercase tracking-wider font-semibold text-purple-400">
-              Platform Master Administration
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xs uppercase tracking-wider font-extrabold text-primary">
+              BusGo Governance Center
             </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-900/60 text-purple-200 border border-purple-700/50">
-              Live System State
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+              Live Production
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Executive Analytics Dashboard
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            Platform Master Console
           </h1>
-          <p className="text-slate-400 text-sm mt-1 max-w-xl">
+          <p className="text-slate-300 text-xs sm:text-sm mt-1 max-w-xl leading-relaxed">
             Real-time financial reconciliation, customer growth, booking volume, and fleet occupancy across all transport operators.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <Link to="/admin/reports">
-            <Button variant="outline" size="sm" className="bg-white/10 text-white border-white/20 hover:bg-white/20 text-xs">
+            <Button variant="navy" size="sm" className="bg-slate-800 hover:bg-slate-700 text-xs border-slate-700 font-bold">
               <TrendingUp className="w-4 h-4 mr-1.5" />
               Full Reports Hub
             </Button>
@@ -157,7 +158,7 @@ export default function AdminDashboardPage() {
             onClick={fetchDashboard}
             disabled={loading}
             icon={RefreshCw}
-            className="text-xs"
+            className="text-xs font-bold shadow-xs"
           >
             Refresh
           </Button>
@@ -175,35 +176,38 @@ export default function AdminDashboardPage() {
       />
 
       {loading && !analyticsData ? (
-        <LoadingSkeleton rows={6} />
+        <LoadingSkeleton count={4} />
       ) : (
         <>
           {/* Key KPI Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-              title="Net Revenue"
-              value={`₹${summary.netRevenue.toLocaleString()}`}
-              subtitle={`Gross: ₹${summary.grossBookingRevenue.toLocaleString()} | Refunds: ₹${summary.totalRefunds.toLocaleString()}`}
+              title="Platform Net Revenue"
+              value={`₹${summary.netRevenue.toLocaleString('en-IN')}`}
+              subtitle={`Gross: ₹${summary.grossBookingRevenue.toLocaleString('en-IN')} | Refunds: ₹${summary.totalRefunds.toLocaleString('en-IN')}`}
               icon={DollarSign}
-              variant="primary"
+              theme="red"
             />
             <StatCard
               title="Total Bookings"
-              value={summary.totalBookings.toLocaleString()}
+              value={summary.totalBookings.toLocaleString('en-IN')}
               subtitle={`${summary.confirmedBookings} Confirmed | ${summary.cancelledBookings} Cancelled`}
               icon={Ticket}
+              theme="navy"
             />
             <StatCard
               title="Active Fleet"
               value={`${summary.totalBuses} Buses`}
               subtitle={`${summary.totalRoutes} Routes | ${summary.totalTrips} Trips`}
               icon={Bus}
+              theme="emerald"
             />
             <StatCard
               title="Transport Operators"
               value={`${summary.approvedOperators} Approved`}
               subtitle={`${summary.pendingOperators} Applications Pending`}
               icon={Building2}
+              theme="amber"
               trend={
                 summary.pendingOperators > 0
                   ? { value: `${summary.pendingOperators} need review`, isPositive: false }
@@ -215,15 +219,15 @@ export default function AdminDashboardPage() {
           {/* Visual Analytics Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Booking Trends Chart (2 cols) */}
-            <div className="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200/90 shadow-xs">
+            <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
               <TrendLineChart
                 data={charts.bookingTrends}
                 xKey="_id"
                 yKey="totalBookings"
                 title="Daily Booking Volume Trends"
                 height={220}
-                strokeColor="#9333ea"
-                fillColor="#d8b4fe"
+                strokeColor="#D92D3A"
+                fillColor="#FEE4E2"
                 valueSuffix=" bookings"
               />
             </div>
@@ -239,7 +243,7 @@ export default function AdminDashboardPage() {
               {/* Monthly Comparison Card */}
               <Card className="p-4 border-slate-200">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     Monthly Performance
                   </h4>
                   <span
@@ -255,13 +259,13 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="mt-3 flex items-baseline gap-4">
                   <div>
-                    <span className="text-2xl font-bold text-slate-900">
+                    <span className="text-2xl font-black text-navy font-mono">
                       {charts.monthlyComparison.currentMonth}
                     </span>
-                    <span className="text-xs text-slate-500 ml-1">This Month</span>
+                    <span className="text-xs text-slate-500 ml-1 font-semibold">This Month</span>
                   </div>
                   <div className="text-slate-400 text-xs">
-                    Previous: <strong className="text-slate-600">{charts.monthlyComparison.previousMonth}</strong>
+                    Previous: <strong className="text-slate-700 font-mono">{charts.monthlyComparison.previousMonth}</strong>
                   </div>
                 </div>
               </Card>
@@ -286,15 +290,15 @@ export default function AdminDashboardPage() {
                   {charts.popularRoutes.map((route, idx) => (
                     <div key={route._id || idx} className="py-2.5 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="w-6 h-6 rounded-full bg-purple-50 text-purple-700 font-bold text-xs flex items-center justify-center">
+                        <span className="w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center font-mono">
                           #{idx + 1}
                         </span>
                         <div>
-                          <p className="text-xs font-bold text-slate-800">{route.routeName}</p>
-                          <p className="text-[10px] text-slate-400">{route.bookingCount} bookings confirmed</p>
+                          <p className="text-xs font-bold text-navy">{route.routeName}</p>
+                          <p className="text-[10px] text-slate-400 font-medium">{route.bookingCount} bookings confirmed</p>
                         </div>
                       </div>
-                      <span className="text-xs font-bold text-slate-900">₹{route.revenue?.toLocaleString()}</span>
+                      <span className="text-xs font-black text-navy font-mono">₹{route.revenue?.toLocaleString('en-IN')}</span>
                     </div>
                   ))}
                 </div>
@@ -309,7 +313,7 @@ export default function AdminDashboardPage() {
               subtitle="Recently submitted transport agency registrations"
               action={
                 <Link to="/admin/operators">
-                  <Button variant="outline" size="sm">
+                  <Button variant="secondary" size="sm" className="font-bold">
                     View All ({summary.pendingOperators})
                   </Button>
                 </Link>
@@ -330,11 +334,11 @@ export default function AdminDashboardPage() {
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-slate-900">{op.companyName}</h4>
+                          <h4 className="text-sm font-black text-navy">{op.companyName}</h4>
                           <StatusBadge status={op.approvalStatus} />
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Reg: <span className="font-mono text-slate-700">{op.registrationNumber}</span> | Contact: {op.contactPerson} ({op.userId?.email || '—'})
+                        <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                          Reg: <span className="font-mono text-navy font-bold">{op.registrationNumber}</span> | Contact: {op.contactPerson} ({op.userId?.email || '—'})
                         </p>
                       </div>
 
@@ -345,7 +349,7 @@ export default function AdminDashboardPage() {
                           icon={XCircle}
                           loading={actionLoadingId === op._id}
                           onClick={() => handleOperatorAction(op._id, 'rejected')}
-                          className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+                          className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 font-bold"
                         >
                           Reject
                         </Button>
@@ -355,6 +359,7 @@ export default function AdminDashboardPage() {
                           icon={CheckCircle}
                           loading={actionLoadingId === op._id}
                           onClick={() => handleOperatorAction(op._id, 'approved')}
+                          className="font-bold shadow-xs"
                         >
                           Approve
                         </Button>
@@ -370,7 +375,7 @@ export default function AdminDashboardPage() {
               subtitle="Immutable operational and security event stream"
               action={
                 <Link to="/admin/audit-logs">
-                  <Button variant="outline" size="sm">
+                  <Button variant="secondary" size="sm" className="font-bold">
                     Full Audit Log
                   </Button>
                 </Link>
@@ -391,8 +396,8 @@ export default function AdminDashboardPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-slate-800">{log.action}</span>
-                          <span className="text-[11px] text-slate-400">
+                          <span className="text-xs font-bold text-navy">{log.action}</span>
+                          <span className="text-[11px] text-slate-400 font-mono">
                             {new Date(log.createdAt).toLocaleTimeString([], {
                               hour: '2-digit',
                               minute: '2-digit',
@@ -400,7 +405,7 @@ export default function AdminDashboardPage() {
                             })}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                        <p className="text-[11px] text-slate-500 truncate mt-0.5 font-medium">
                           Actor: {log.userId?.name || 'System'} ({log.userId?.role || 'internal'}) | IP: {log.ipAddress || '127.0.0.1'}
                         </p>
                       </div>

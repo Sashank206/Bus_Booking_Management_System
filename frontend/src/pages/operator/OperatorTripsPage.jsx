@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Calendar,
   Plus,
@@ -15,7 +16,8 @@ import {
   Ticket,
   DollarSign,
   AlertTriangle,
-  MapPin
+  MapPin,
+  BarChart3
 } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -195,11 +197,11 @@ export default function OperatorTripsPage() {
       key: 'routeId',
       render: (row) => (
         <div>
-          <div className="font-bold text-slate-900 flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-purple-600" />
+          <div className="font-black text-navy flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-primary" />
             {row.routeId?.routeName || 'Route Corridor'}
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">
+          <div className="text-[11px] text-slate-500 font-medium mt-0.5">
             {row.routeId?.sourceStopId?.city} → {row.routeId?.destinationStopId?.city}
           </div>
         </div>
@@ -210,8 +212,8 @@ export default function OperatorTripsPage() {
       key: 'busId',
       render: (row) => (
         <div className="text-xs">
-          <div className="font-semibold text-slate-800 flex items-center gap-1">
-            <Bus className="w-3 h-3 text-amber-500" />
+          <div className="font-bold text-slate-800 flex items-center gap-1">
+            <Bus className="w-3 h-3 text-primary" />
             {row.busId?.busNumber}
           </div>
           <div className="text-slate-500 text-[11px] font-mono">
@@ -225,10 +227,10 @@ export default function OperatorTripsPage() {
       key: 'departureTime',
       render: (row) => (
         <div className="text-xs">
-          <div className="font-semibold text-slate-900">
+          <div className="font-bold text-navy">
             {new Date(row.travelDate).toLocaleDateString()}
           </div>
-          <div className="text-slate-500 text-[11px] flex items-center gap-1 mt-0.5">
+          <div className="text-slate-500 text-[11px] flex items-center gap-1 mt-0.5 font-medium">
             <Clock className="w-3 h-3 text-slate-400" />
             {new Date(row.departureTime).toLocaleTimeString([], {
               hour: '2-digit',
@@ -247,7 +249,7 @@ export default function OperatorTripsPage() {
       header: 'Base Fare',
       key: 'baseFare',
       render: (row) => (
-        <span className="text-xs font-bold text-slate-900">
+        <span className="text-xs font-black text-navy font-mono">
           ₹{row.baseFare}
         </span>
       )
@@ -270,6 +272,14 @@ export default function OperatorTripsPage() {
             title="Passenger Manifest"
           />
 
+          <Link
+            to={`/operator/reports?tripId=${row._id}`}
+            className="p-1.5 text-slate-500 hover:text-primary rounded-lg hover:bg-slate-100 transition-colors"
+            title="Occupancy & Revenue Reports"
+          >
+            <BarChart3 className="w-4 h-4" />
+          </Link>
+
           {row.tripStatus === 'scheduled' && (
             <Button
               variant="outline"
@@ -283,6 +293,15 @@ export default function OperatorTripsPage() {
               Cancel
             </Button>
           )}
+
+          {row.tripStatus === 'completed' && (
+            <span
+              className="text-[11px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-md cursor-not-allowed select-none"
+              title="Completed trips cannot be cancelled"
+            >
+              Completed
+            </span>
+          )}
         </div>
       )
     }
@@ -293,10 +312,10 @@ export default function OperatorTripsPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-navy tracking-tight">
             Trip Scheduling &amp; Manifests
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">
             Assign vehicles to established corridors, define base fares, and inspect live passenger manifests.
           </p>
         </div>
@@ -321,6 +340,7 @@ export default function OperatorTripsPage() {
                 fetchOptions();
                 setScheduleModalOpen(true);
               }}
+              className="font-bold shadow-xs"
             >
               Schedule New Trip
             </Button>
@@ -329,19 +349,21 @@ export default function OperatorTripsPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-1 bg-white p-2 rounded-xl border border-slate-200 w-fit">
+      <div className="flex items-center gap-1.5 bg-white p-2 rounded-2xl border border-slate-200 w-fit overflow-x-auto shadow-2xs">
         {[
           { id: 'all', label: 'All Trips' },
           { id: 'scheduled', label: 'Scheduled' },
+          { id: 'boarding', label: 'Boarding' },
+          { id: 'in_progress', label: 'In Progress' },
           { id: 'completed', label: 'Completed' },
           { id: 'cancelled', label: 'Cancelled' }
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setStatusFilter(tab.id)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               statusFilter === tab.id
-                ? 'bg-purple-600 text-white shadow-xs'
+                ? 'bg-primary text-white shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -432,8 +454,8 @@ export default function OperatorTripsPage() {
             helperText="Base starting fare for full corridor travel."
           />
 
-          <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl text-xs text-purple-900 leading-relaxed">
-            <span className="font-bold block mb-0.5">Automated Multi-Document Creation:</span>
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 leading-relaxed">
+            <span className="font-bold text-navy block mb-0.5">Automated Multi-Document Creation:</span>
             Upon submission, BusGo verifies vehicle schedule availability and automatically generates matching <strong>TripStops</strong> and complete <strong>SeatInventory</strong> with half-open segment reuse support.
           </div>
 
@@ -452,6 +474,7 @@ export default function OperatorTripsPage() {
               size="md"
               type="submit"
               loading={submittingTrip}
+              className="font-bold shadow-xs"
             >
               Publish Trip
             </Button>
@@ -477,18 +500,18 @@ export default function OperatorTripsPage() {
           </div>
         ) : manifestData ? (
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200">
               <div>
-                <span className="font-bold text-slate-900 text-sm">
+                <span className="font-black text-navy text-sm">
                   {manifestData.trip?.routeId?.routeName}
                 </span>
-                <span className="text-slate-500 block text-[11px]">
+                <span className="text-slate-500 block text-[11px] font-medium">
                   Vehicle: {manifestData.trip?.busId?.registrationNumber}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-[11px] text-slate-500 block">Total Passengers</span>
-                <span className="text-base font-extrabold text-purple-600">
+                <span className="text-[11px] text-slate-500 font-bold block uppercase">Total Passengers</span>
+                <span className="text-lg font-black text-primary font-mono">
                   {manifestData.totalPassengers || 0}
                 </span>
               </div>
@@ -501,7 +524,7 @@ export default function OperatorTripsPage() {
                 description="No passengers have reserved seats on this scheduled trip yet."
               />
             ) : (
-              <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <div className="overflow-x-auto border border-slate-200 rounded-2xl">
                 <table className="min-w-full divide-y divide-slate-200 text-left">
                   <thead className="bg-slate-50">
                     <tr>
@@ -516,7 +539,7 @@ export default function OperatorTripsPage() {
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {manifestData.manifest.map((item, idx) => (
                       <tr key={idx} className="hover:bg-slate-50">
-                        <td className="px-3.5 py-2.5 font-mono font-bold text-purple-700">
+                        <td className="px-3.5 py-2.5 font-mono font-bold text-primary">
                           {item.seatNumber}
                         </td>
                         <td className="px-3.5 py-2.5 font-mono text-slate-600">

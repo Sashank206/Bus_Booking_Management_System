@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Bus, User, Mail, Lock, Phone, UserPlus } from 'lucide-react';
+import { Bus, User, Mail, Lock, Phone, UserPlus, Eye, EyeOff } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import useToast from '../../hooks/useToast';
 import InputField from '../../components/forms/InputField';
@@ -17,6 +17,7 @@ export default function RegisterPage() {
     password: '',
     phone: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -31,7 +32,6 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Client-side quick validation
     const validationErrors = {};
     if (!formData.name.trim()) validationErrors.name = 'Full name is required';
     if (!formData.email.trim()) validationErrors.email = 'Email address is required';
@@ -67,23 +67,23 @@ export default function RegisterPage() {
         {/* Header */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 font-bold shadow-xs">
+            <div className="w-11 h-11 rounded-2xl bg-primary flex items-center justify-center text-white font-bold shadow-xs">
               <Bus className="w-6 h-6" />
             </div>
-            <span className="text-2xl font-extrabold tracking-tight text-slate-900">
-              Bus<span className="text-amber-500">Go</span>
+            <span className="text-2xl font-black tracking-tight text-navy">
+              Bus<span className="text-primary">Go</span>
             </span>
           </Link>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-2xl font-black text-navy tracking-tight">
             Create Customer Account
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Book buses, reserve temporary seat holds, and manage your tickets.
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Book buses, reserve temporary seat holds, and manage your electronic tickets.
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-7 shadow-lg">
+        <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs">
           <form onSubmit={handleSubmit} className="space-y-4">
             <InputField
               label="Full Name"
@@ -102,57 +102,66 @@ export default function RegisterPage() {
               name="email"
               type="email"
               icon={Mail}
-              placeholder="rajesh@example.com"
+              placeholder="name@example.com"
               value={formData.email}
               onChange={handleChange}
               error={errors.email}
               required
             />
 
-            <InputField
-              label="Password"
-              name="password"
-              type="password"
-              icon={Lock}
-              placeholder="At least 6 characters"
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-              helperText="Must contain at least 6 characters"
-              required
-            />
+            <div className="relative">
+              <InputField
+                label="Password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                icon={Lock}
+                placeholder="At least 6 characters"
+                value={formData.password}
+                onChange={handleChange}
+                error={errors.password}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-9 text-slate-400 hover:text-slate-600 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
 
             <InputField
-              label="Mobile Number "
+              label="Mobile Number (Optional)"
               name="phone"
               type="tel"
               icon={Phone}
-              placeholder="+91 98765 43210"
+              placeholder="10-digit mobile number"
               value={formData.phone}
               onChange={handleChange}
               error={errors.phone}
-              required
+              helperText="For booking updates via SMS & WhatsApp."
             />
 
             <div className="pt-2">
               <Button
                 type="submit"
-                variant="accent"
+                variant="primary"
                 size="md"
                 loading={loading}
-                className="w-full"
+                className="w-full font-bold shadow-xs"
                 icon={UserPlus}
               >
-                Complete Registration
+                Create Account
               </Button>
             </div>
           </form>
         </div>
 
-        {/* Footer */}
+        {/* Links to Login */}
         <div className="text-center text-xs text-slate-500">
-          Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-slate-900 hover:underline">
+          Already have a BusGo account?{' '}
+          <Link to="/login" className="font-bold text-primary hover:underline">
             Sign In here
           </Link>
         </div>
@@ -160,4 +169,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

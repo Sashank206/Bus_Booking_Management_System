@@ -58,6 +58,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+// Request ID middleware for tracing and diagnostic logging
+app.use((req, res, next) => {
+  req.id = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  res.setHeader('X-Request-Id', req.id);
+  next();
+});
+
 // General API rate limiter with resilient key generation
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -136,10 +143,17 @@ app.use(errorHandler);
 // Start server and initialize database if run directly
 let server;
 if (require.main === module) {
+  const { startTripLifecycleScheduler } = require('./services/tripLifecycleService');
+  const { startInventoryLifecycleScheduler } = require('./services/inventoryLifecycleService');
+
   connectDB().then(() => {
     server = app.listen(PORT, () => {
       console.log(`[BusGo] Backend server running on port at: http://localhost:${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
       console.log(`[BusGo] Health check accessible at: http://localhost:${PORT}/api/health`);
+
+      // Initialize background lifecycle schedulers
+      startTripLifecycleScheduler();
+      startInventoryLifecycleScheduler();
     });
   });
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Bus, Mail, Lock, LogIn, ShieldCheck, UserCheck, Briefcase } from 'lucide-react';
+import { Bus, Mail, Lock, LogIn, ShieldCheck, UserCheck, Briefcase, Eye, EyeOff } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import useToast from '../../hooks/useToast';
 import InputField from '../../components/forms/InputField';
@@ -14,6 +14,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -79,25 +80,25 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 font-bold shadow-xs">
+            <div className="w-11 h-11 rounded-2xl bg-primary flex items-center justify-center text-white font-bold shadow-xs">
               <Bus className="w-6 h-6" />
             </div>
-            <span className="text-2xl font-extrabold tracking-tight text-slate-900">
-              Bus<span className="text-amber-500">Go</span>
+            <span className="text-2xl font-black tracking-tight text-navy">
+              Bus<span className="text-primary">Go</span>
             </span>
           </Link>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-2xl font-black text-navy tracking-tight">
             Sign In to Your Account
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1 font-medium">
             Access customer reservations, operator fleets, or system administration.
           </p>
         </div>
 
         {/* Login Form Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-7 shadow-lg">
+        <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs">
           {error && (
-            <div className="mb-5 p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium leading-relaxed">
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 font-semibold leading-relaxed">
               {error}
             </div>
           )}
@@ -114,16 +115,26 @@ export default function LoginPage() {
               required
             />
 
-            <InputField
-              label="Password"
-              name="password"
-              type="password"
-              icon={Lock}
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <InputField
+                label="Password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                icon={Lock}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-9 text-slate-400 hover:text-slate-600 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
 
             <div className="pt-2">
               <Button
@@ -131,7 +142,7 @@ export default function LoginPage() {
                 variant="primary"
                 size="md"
                 loading={loading}
-                className="w-full"
+                className="w-full font-bold shadow-xs"
                 icon={LogIn}
               >
                 Sign In
@@ -141,14 +152,14 @@ export default function LoginPage() {
 
           {/* Quick Demo Credentials Assistant */}
           <div className="mt-6 pt-5 border-t border-slate-100">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2.5 text-center">
-              Quick-Fill Test Accounts (Demo)
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2.5 text-center">
+              Quick-Fill Demo Credentials
             </span>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => fillCredentials('admin@busgo.com', 'BusGo@Demo2026')}
-                className="flex flex-col items-center p-2 rounded-lg border border-purple-200 bg-purple-50/50 hover:bg-purple-50 text-purple-900 transition-colors text-center cursor-pointer"
+                className="flex flex-col items-center p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-navy transition-all text-center cursor-pointer shadow-2xs hover:border-slate-300"
               >
                 <ShieldCheck className="w-4 h-4 text-purple-600 mb-1" />
                 <span className="text-[11px] font-bold">Admin</span>
@@ -157,18 +168,18 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => fillCredentials('rajesh@travels.com', 'BusGo@Demo2026')}
-                className="flex flex-col items-center p-2 rounded-lg border border-amber-200 bg-amber-50/50 hover:bg-amber-50 text-amber-900 transition-colors text-center cursor-pointer"
+                className="flex flex-col items-center p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-navy transition-all text-center cursor-pointer shadow-2xs hover:border-slate-300"
               >
-                <Briefcase className="w-4 h-4 text-amber-600 mb-1" />
+                <Briefcase className="w-4 h-4 text-primary mb-1" />
                 <span className="text-[11px] font-bold">Operator</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => fillCredentials('priya.sharma@example.com', 'BusGo@Demo2026')}
-                className="flex flex-col items-center p-2 rounded-lg border border-blue-200 bg-blue-50/50 hover:bg-blue-50 text-blue-900 transition-colors text-center cursor-pointer"
+                className="flex flex-col items-center p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-navy transition-all text-center cursor-pointer shadow-2xs hover:border-slate-300"
               >
-                <UserCheck className="w-4 h-4 text-blue-600 mb-1" />
+                <UserCheck className="w-4 h-4 text-emerald-600 mb-1" />
                 <span className="text-[11px] font-bold">Customer</span>
               </button>
             </div>
@@ -179,14 +190,14 @@ export default function LoginPage() {
         <div className="text-center space-y-2 text-xs text-slate-500">
           <p>
             Don't have a customer account?{' '}
-            <Link to="/register" className="font-semibold text-slate-900 hover:underline">
+            <Link to="/register" className="font-bold text-primary hover:underline">
               Create Customer Account
             </Link>
           </p>
           <p>
-            Operating a bus service?{' '}
-            <Link to="/operator-register" className="font-semibold text-amber-600 hover:underline">
-              Apply as Bus Operator
+            Operating an Indian bus fleet?{' '}
+            <Link to="/operator-register" className="font-bold text-navy hover:underline">
+              Register as Fleet Operator
             </Link>
           </p>
         </div>
@@ -194,4 +205,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

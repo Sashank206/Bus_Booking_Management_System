@@ -49,6 +49,14 @@ const bookingSchema = new mongoose.Schema(
     },
     cancelledAt: {
       type: Date
+    },
+    holdToken: {
+      type: String,
+      trim: true
+    },
+    idempotencyKey: {
+      type: String,
+      trim: true
     }
   },
   {
@@ -59,6 +67,20 @@ const bookingSchema = new mongoose.Schema(
 // Indexes
 bookingSchema.index({ userId: 1, bookingDate: -1 });
 bookingSchema.index({ tripId: 1, bookingStatus: 1 });
+bookingSchema.index(
+  { holdToken: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { holdToken: { $type: 'string' } }
+  }
+);
+bookingSchema.index(
+  { idempotencyKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { idempotencyKey: { $type: 'string' } }
+  }
+);
 
 const Booking = mongoose.model('Booking', bookingSchema);
 

@@ -13,6 +13,12 @@ const {
 const AppError = require('../utils/appError');
 const asyncHandler = require('../middleware/asyncHandler');
 const { getCancellationPolicy, updateCancellationPolicy } = require('../services/policyService');
+const { updateTripLifecycleStatuses } = require('../services/tripLifecycleService');
+const {
+  cleanupExpiredHolds,
+  archiveEligibleInventories,
+  getInventoryStorageStats
+} = require('../services/inventoryLifecycleService');
 
 /**
  * Get aggregated system statistics for Admin Dashboard
@@ -529,6 +535,75 @@ const updateCancellationPolicyConfig = asyncHandler(async (req, res, next) => {
   }
 });
 
+/**
+ * Manually trigger trip lifecycle status update
+ * POST /api/admin/trips/update-statuses
+ */
+const triggerTripLifecycleUpdate = asyncHandler(async (req, res, next) => {
+  const result = await updateTripLifecycleStatuses();
+
+  await AuditLog.create({
+    userId: req.user._id,
+    action: 'TRIP_LIFECYCLE_RUN',
+    entityType: 'Trip',
+    description: `Admin manually triggered trip lifecycle update. Evaluated: ${result.evaluated}, Transitions: ${result.transitions.length}`
+  }).catch(() => {});
+
+  res.status(200).json({
+    status: 'success',
+    message: `Trip lifecycle statuses evaluated: ${result.evaluated} evaluated, ${result.transitions.length} transitioned.`,
+    data: result
+  });
+});
+
+/**
+ * Trigger SeatInventory cleanup and archival (supports dryRun and configurable retentionDays)
+ * POST /api/admin/inventory/cleanup
+ */
+const triggerInventoryCleanup = asyncHandler(async (req, res, next) => {
+  const { retentionDays = 180, dryRun = false } = req.body || {};
+  const isDryRun = Boolean(dryRun);
+  const days = Math.max(1, parseInt(retentionDays, 10) || 180);
+
+  const holdCleanupResult = await cleanupExpiredHolds();
+  const archiveResult = await archiveEligibleInventories({
+    retentionDays: days,
+    dryRun: isDryRun
+  });
+
+  await AuditLog.create({
+    userId: req.user._id,
+    action: isDryRun ? 'INVENTORY_CLEANUP_DRY_RUN' : 'INVENTORY_CLEANUP_RUN',
+    entityType: 'SeatInventory',
+    description: `Admin triggered inventory cleanup (dryRun: ${isDryRun}, retention: ${days} days). Expired holds: ${holdCleanupResult.releasedHoldsCount}, Archived: ${archiveResult.archivedSeatsCount}, Skipped: ${archiveResult.skippedTripsCount}`
+  }).catch(() => {});
+
+  res.status(200).json({
+    status: 'success',
+    message: isDryRun
+      ? `Dry run completed. ${archiveResult.eligibleTripsCount} trips eligible for archival.`
+      : `Inventory cleanup completed. ${archiveResult.archivedSeatsCount} seats archived across ${archiveResult.eligibleTripsCount} trips.`,
+    data: {
+      holdCleanup: holdCleanupResult,
+      archival: archiveResult
+    }
+  });
+});
+
+/**
+ * Get SeatInventory storage statistics and retention metrics
+ * GET /api/admin/inventory/stats
+ */
+const getInventoryStats = asyncHandler(async (req, res, next) => {
+  const retentionDays = parseInt(req.query.retentionDays, 10) || 180;
+  const stats = await getInventoryStorageStats(retentionDays);
+
+  res.status(200).json({
+    status: 'success',
+    data: stats
+  });
+});
+
 module.exports = {
   getAdminDashboard,
   getOperators,
@@ -541,5 +616,8 @@ module.exports = {
   getAdminRefunds,
   simulateRefundStatus,
   getCancellationPolicyConfig,
-  updateCancellationPolicyConfig
+  updateCancellationPolicyConfig,
+  triggerTripLifecycleUpdate,
+  triggerInventoryCleanup,
+  getInventoryStats
 };

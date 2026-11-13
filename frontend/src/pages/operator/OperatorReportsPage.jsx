@@ -90,8 +90,8 @@ export default function OperatorReportsPage() {
   };
 
   const tabs = [
-    { id: 'occupancy', label: 'Trip Occupancy Report', icon: Percent },
-    { id: 'bookings', label: 'Passenger Bookings Report', icon: Ticket },
+    { id: 'occupancy', label: 'Trip Occupancy Analysis', icon: Percent },
+    { id: 'bookings', label: 'Passenger Bookings Audit', icon: Ticket },
     { id: 'revenue', label: 'Fleet Revenue & Settlements', icon: DollarSign }
   ];
 
@@ -100,20 +100,20 @@ export default function OperatorReportsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <BarChart3 className="w-6 h-6 text-blue-600" />
+          <h1 className="text-xl sm:text-2xl font-black text-navy tracking-tight flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 text-primary" />
             Operator Fleet Analytics & Reports
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
             Real-time fleet occupancy, passenger bookings, and net revenue settlements.
           </p>
         </div>
 
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={handleExportCSV}
-          className="gap-1.5 self-start md:self-auto"
+          className="gap-1.5 self-start md:self-auto font-bold"
         >
           <Download className="w-4 h-4" />
           Export CSV
@@ -133,10 +133,10 @@ export default function OperatorReportsPage() {
                 setSearchTerm('');
                 setStatusFilter('all');
               }}
-              className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
                 isActive
-                  ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                  ? 'border-primary text-primary bg-primary/5 rounded-t-xl'
+                  : 'border-transparent text-slate-500 hover:text-navy hover:border-slate-300'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -166,19 +166,19 @@ export default function OperatorReportsPage() {
               placeholder="Search by Bus or Route..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+              className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary focus:outline-none"
             />
           </div>
 
           {loading ? (
-            <LoadingSkeleton rows={5} />
+            <LoadingSkeleton count={5} />
           ) : occupancyData.length === 0 ? (
             <EmptyState title="No Trips Found" description="No trips found for the selected time window." />
           ) : (
-            <div className="overflow-hidden border border-slate-200/90 rounded-xl bg-white shadow-xs">
+            <div className="overflow-hidden border border-slate-200 rounded-2xl bg-white shadow-xs">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
-                  <thead className="bg-slate-50 font-bold uppercase tracking-wider text-slate-500">
+                  <thead className="bg-slate-50 font-bold uppercase tracking-wider text-slate-600">
                     <tr>
                       <th className="px-4 py-3">Bus Number</th>
                       <th className="px-4 py-3">Route</th>
@@ -194,34 +194,34 @@ export default function OperatorReportsPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {occupancyData.map((row) => (
-                      <tr key={row.tripId} className="hover:bg-slate-50/70 transition-colors">
+                      <tr key={row.tripId} className="hover:bg-slate-50 transition-colors">
                         <td className="px-4 py-3">
-                          <span className="font-bold text-slate-900 block">{row.busNumber}</span>
-                          <span className="text-[10px] text-slate-400">{row.busType}</span>
+                          <span className="font-bold text-navy block">{row.busNumber}</span>
+                          <span className="text-[10px] text-slate-400 font-medium">{row.busType}</span>
                         </td>
                         <td className="px-4 py-3 text-slate-700">
-                          <span>{row.routeName}</span>
+                          <span className="font-semibold">{row.routeName}</span>
                           {row.segmentCount > 1 && (
-                            <span className="text-[10px] text-blue-600 block">
+                            <span className="text-[10px] text-primary block font-medium">
                               {row.segmentCount} atomic segments
                             </span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-slate-600">
                           {new Date(row.departureTime).toLocaleDateString()}{' '}
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-400 font-mono">
                             {new Date(row.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-center font-bold text-slate-700">{row.totalSeats}</td>
+                        <td className="px-4 py-3 text-center font-bold text-slate-800">{row.totalSeats}</td>
                         <td className="px-4 py-3 text-center font-bold text-emerald-600">{row.confirmedSeats}</td>
-                        <td className="px-4 py-3 text-center font-semibold text-amber-600">{row.heldSeats}</td>
-                        <td className="px-4 py-3 text-center font-semibold text-blue-600">{row.availableSeats}</td>
+                        <td className="px-4 py-3 text-center font-bold text-amber-600">{row.heldSeats}</td>
+                        <td className="px-4 py-3 text-center font-bold text-blue-600">{row.availableSeats}</td>
                         <td className="px-4 py-3 text-center font-bold text-purple-600">{row.totalAllocations || row.confirmedSeats}</td>
                         <td className="px-4 py-3 text-center font-medium text-rose-500">{row.cancelledSeats}</td>
                         <td className="px-4 py-3 text-right">
                           <span
-                            className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold ${
+                            className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-black ${
                               row.occupancyPercentage >= 75
                                 ? 'bg-emerald-100 text-emerald-800'
                                 : row.occupancyPercentage >= 40
@@ -252,19 +252,19 @@ export default function OperatorReportsPage() {
               placeholder="Search by PNR..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+              className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary focus:outline-none"
             />
           </div>
 
           {loading ? (
-            <LoadingSkeleton rows={5} />
+            <LoadingSkeleton count={5} />
           ) : bookingsData.length === 0 ? (
             <EmptyState title="No Bookings Found" description="No passenger bookings match your query." />
           ) : (
-            <div className="overflow-hidden border border-slate-200/90 rounded-xl bg-white shadow-xs">
+            <div className="overflow-hidden border border-slate-200 rounded-2xl bg-white shadow-xs">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
-                  <thead className="bg-slate-50 font-bold uppercase tracking-wider text-slate-500">
+                  <thead className="bg-slate-50 font-bold uppercase tracking-wider text-slate-600">
                     <tr>
                       <th className="px-4 py-3">PNR</th>
                       <th className="px-4 py-3">Passenger</th>
@@ -276,20 +276,20 @@ export default function OperatorReportsPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {bookingsData.map((b) => (
-                      <tr key={b._id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="px-4 py-3 font-mono font-bold text-slate-900">{b.pnr}</td>
+                      <tr key={b._id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-3 font-mono font-black text-navy">{b.pnr}</td>
                         <td className="px-4 py-3">
-                          <p className="font-semibold text-slate-800">{b.userId?.name || 'Passenger'}</p>
-                          <p className="text-[10px] text-slate-400">{b.userId?.phone}</p>
+                          <p className="font-bold text-navy">{b.userId?.name || 'Passenger'}</p>
+                          <p className="text-[10px] text-slate-400 font-mono">{b.userId?.phone}</p>
                         </td>
                         <td className="px-4 py-3 text-slate-700">
-                          <p className="font-medium text-slate-800">{b.tripId?.busId?.busNumber}</p>
-                          <p className="text-[10px] text-slate-500">{b.tripId?.routeId?.routeName}</p>
+                          <p className="font-bold text-navy">{b.tripId?.busId?.busNumber}</p>
+                          <p className="text-[10px] text-slate-500 font-medium">{b.tripId?.routeId?.routeName}</p>
                         </td>
                         <td className="px-4 py-3">
                           <StatusBadge status={b.bookingStatus} />
                         </td>
-                        <td className="px-4 py-3 font-bold text-slate-900">₹{b.totalAmount}</td>
+                        <td className="px-4 py-3 font-black text-navy font-mono">₹{b.totalAmount}</td>
                         <td className="px-4 py-3 text-slate-500">{new Date(b.createdAt).toLocaleDateString()}</td>
                       </tr>
                     ))}
@@ -307,29 +307,29 @@ export default function OperatorReportsPage() {
           {revenueData?.summary && (
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <Card className="p-4 border-slate-200">
-                <p className="text-xs text-slate-400 font-semibold uppercase">Gross Ticket Collections</p>
-                <p className="text-2xl font-bold text-emerald-600 mt-1">₹{revenueData.summary.grossRevenue.toLocaleString()}</p>
-                <p className="text-[10px] text-slate-400">{revenueData.summary.paymentCount} payments collected</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase">Gross Ticket Collections</p>
+                <p className="text-2xl font-black text-emerald-600 font-mono mt-1">₹{revenueData.summary.grossRevenue.toLocaleString('en-IN')}</p>
+                <p className="text-[10px] text-slate-400 font-medium">{revenueData.summary.paymentCount} payments collected</p>
               </Card>
 
               <Card className="p-4 border-slate-200">
-                <p className="text-xs text-slate-400 font-semibold uppercase">Completed Refunds (Settled)</p>
-                <p className="text-2xl font-bold text-rose-600 mt-1">₹{revenueData.summary.completedRefunds.toLocaleString()}</p>
-                <p className="text-[10px] text-slate-400">{revenueData.summary.refundCount} refunds processed</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase">Completed Refunds (Settled)</p>
+                <p className="text-2xl font-black text-rose-600 font-mono mt-1">₹{revenueData.summary.completedRefunds.toLocaleString('en-IN')}</p>
+                <p className="text-[10px] text-slate-400 font-medium">{revenueData.summary.refundCount} refunds processed</p>
               </Card>
 
               <Card className="p-4 border-slate-200">
-                <p className="text-xs text-slate-400 font-semibold uppercase">Pending / In-Process Liability</p>
-                <p className="text-2xl font-bold text-amber-600 mt-1">₹{revenueData.summary.outstandingRefundLiability.toLocaleString()}</p>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-slate-400 font-bold uppercase">Pending Refund Liability</p>
+                <p className="text-2xl font-black text-amber-600 font-mono mt-1">₹{revenueData.summary.outstandingRefundLiability.toLocaleString('en-IN')}</p>
+                <p className="text-[10px] text-slate-400 font-medium">
                   ₹{revenueData.summary.pendingRefunds || 0} Pending | ₹{revenueData.summary.processingRefunds || 0} Processing
                 </p>
               </Card>
 
-              <Card className="p-4 border-slate-200 bg-blue-50/50 border-blue-100">
-                <p className="text-xs text-blue-700 font-semibold uppercase">Net Settled Earnings</p>
-                <p className="text-2xl font-bold text-blue-900 mt-1">₹{revenueData.summary.netRevenue.toLocaleString()}</p>
-                <p className="text-[10px] text-blue-600">Gross collections minus completed refunds</p>
+              <Card className="p-4 border-slate-200 bg-primary/5 border-primary/20">
+                <p className="text-[10px] text-primary font-bold uppercase">Net Settled Earnings</p>
+                <p className="text-2xl font-black text-primary font-mono mt-1">₹{revenueData.summary.netRevenue.toLocaleString('en-IN')}</p>
+                <p className="text-[10px] text-slate-500 font-medium">Gross collections minus completed refunds</p>
               </Card>
             </div>
           )}
@@ -338,4 +338,3 @@ export default function OperatorReportsPage() {
     </div>
   );
 }
-

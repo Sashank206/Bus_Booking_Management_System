@@ -262,12 +262,12 @@ export default function AdminStopsRoutesPage() {
       key: 'stopName',
       render: (row) => (
         <div>
-          <div className="font-bold text-slate-900 flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-purple-600" />
+          <div className="font-black text-navy flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-primary" />
             {row.stopName}
           </div>
           {row.address && (
-            <div className="text-[11px] text-slate-500 mt-0.5 max-w-xs truncate">
+            <div className="text-[11px] text-slate-500 font-medium mt-0.5 max-w-xs truncate">
               {row.address}
             </div>
           )}
@@ -278,7 +278,7 @@ export default function AdminStopsRoutesPage() {
       header: 'City & State',
       key: 'city',
       render: (row) => (
-        <span className="text-xs font-semibold text-slate-800">
+        <span className="text-xs font-bold text-slate-800">
           {row.city}{row.state ? `, ${row.state}` : ''}
         </span>
       )
@@ -309,7 +309,7 @@ export default function AdminStopsRoutesPage() {
           variant="outline"
           size="sm"
           onClick={() => handleToggleStopStatus(row)}
-          className={row.isActive ? 'text-amber-600 border-amber-200' : 'text-emerald-600 border-emerald-200'}
+          className={row.isActive ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'}
         >
           {row.isActive ? 'Deactivate' : 'Activate'}
         </Button>
@@ -324,11 +324,11 @@ export default function AdminStopsRoutesPage() {
       key: 'routeName',
       render: (row) => (
         <div>
-          <div className="font-bold text-slate-900 flex items-center gap-1.5">
-            <RouteIcon className="w-3.5 h-3.5 text-purple-600" />
+          <div className="font-black text-navy flex items-center gap-1.5">
+            <RouteIcon className="w-3.5 h-3.5 text-primary" />
             {row.routeName}
           </div>
-          <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+          <div className="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-1">
             <span>{row.sourceStopId?.city || 'Origin'}</span>
             <ArrowRight className="w-3 h-3 text-slate-400" />
             <span>{row.destinationStopId?.city || 'Destination'}</span>
@@ -341,9 +341,9 @@ export default function AdminStopsRoutesPage() {
       key: 'distance',
       render: (row) => (
         <div className="text-xs text-slate-700">
-          <div>{row.distanceKm ? `${row.distanceKm} km` : '—'}</div>
+          <div className="font-bold">{row.distanceKm ? `${row.distanceKm} km` : '—'}</div>
           {row.estimatedDurationMinutes && (
-            <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+            <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5 font-medium">
               <Clock className="w-3 h-3 text-slate-400" />
               {Math.floor(row.estimatedDurationMinutes / 60)}h{' '}
               {row.estimatedDurationMinutes % 60}m
@@ -356,8 +356,8 @@ export default function AdminStopsRoutesPage() {
       header: 'Intermediate Stops',
       key: 'totalStops',
       render: (row) => (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700">
-          <Layers className="w-3 h-3 text-slate-500" />
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
+          <Layers className="w-3 h-3 text-primary" />
           {row.totalStops || 2} stops
         </span>
       )
@@ -385,7 +385,7 @@ export default function AdminStopsRoutesPage() {
             variant="outline"
             size="sm"
             onClick={() => handleToggleRouteStatus(row)}
-            className={row.isActive ? 'text-amber-600 border-amber-200' : 'text-emerald-600 border-emerald-200'}
+            className={row.isActive ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'}
           >
             {row.isActive ? 'Deactivate' : 'Activate'}
           </Button>
@@ -406,10 +406,10 @@ export default function AdminStopsRoutesPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-navy tracking-tight">
             Stops &amp; Routes Master Network
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">
             Configure geographic boarding locations, multi-city travel corridors, and ordered stop sequences.
           </p>
         </div>
@@ -421,6 +421,7 @@ export default function AdminStopsRoutesPage() {
               size="sm"
               icon={Plus}
               onClick={() => setAddStopModalOpen(true)}
+              className="font-bold shadow-xs"
             >
               Add Physical Stop
             </Button>
@@ -430,6 +431,7 @@ export default function AdminStopsRoutesPage() {
               size="sm"
               icon={Plus}
               onClick={() => setCreateRouteModalOpen(true)}
+              className="font-bold shadow-xs"
             >
               Create Route Corridor
             </Button>
@@ -438,13 +440,13 @@ export default function AdminStopsRoutesPage() {
       </div>
 
       {/* Tabs navigation */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex border-b border-slate-200 gap-2">
         <button
           onClick={() => setActiveTab('stops')}
-          className={`pb-3 px-4 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+          className={`pb-3 px-4 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'stops'
-              ? 'border-purple-600 text-purple-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-primary text-primary bg-primary/5 rounded-t-xl'
+              : 'border-transparent text-slate-500 hover:text-navy hover:border-slate-300'
           }`}
         >
           <MapPin className="w-4 h-4" />
@@ -452,10 +454,10 @@ export default function AdminStopsRoutesPage() {
         </button>
         <button
           onClick={() => setActiveTab('routes')}
-          className={`pb-3 px-4 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+          className={`pb-3 px-4 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'routes'
-              ? 'border-purple-600 text-purple-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-primary text-primary bg-primary/5 rounded-t-xl'
+              : 'border-transparent text-slate-500 hover:text-navy hover:border-slate-300'
           }`}
         >
           <RouteIcon className="w-4 h-4" />
@@ -466,7 +468,7 @@ export default function AdminStopsRoutesPage() {
       {/* Stops Tab View */}
       {activeTab === 'stops' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4 bg-white p-3 rounded-xl border border-slate-200">
+          <div className="flex items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
             <div className="w-full sm:w-80">
               <InputField
                 placeholder="Search stops by name or city..."
@@ -481,6 +483,7 @@ export default function AdminStopsRoutesPage() {
               icon={RefreshCw}
               onClick={fetchStops}
               loading={stopsLoading}
+              className="font-bold"
             >
               Refresh
             </Button>
@@ -508,6 +511,7 @@ export default function AdminStopsRoutesPage() {
               icon={RefreshCw}
               onClick={fetchRoutes}
               loading={routesLoading}
+              className="font-bold"
             >
               Refresh Routes
             </Button>
@@ -599,6 +603,7 @@ export default function AdminStopsRoutesPage() {
               size="md"
               type="submit"
               loading={submittingStop}
+              className="font-bold shadow-xs"
             >
               Save Stop
             </Button>
@@ -659,10 +664,10 @@ export default function AdminStopsRoutesPage() {
           </div>
 
           {/* Intermediate Stops section */}
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-navy uppercase tracking-wider">
                   Ordered Intermediate Stops
                 </h4>
                 <p className="text-[11px] text-slate-500">
@@ -675,13 +680,14 @@ export default function AdminStopsRoutesPage() {
                 type="button"
                 icon={Plus}
                 onClick={addIntermediateStopField}
+                className="font-bold"
               >
                 Add Intermediate Stop
               </Button>
             </div>
 
             {newRoute.intermediateStops.map((st, idx) => (
-              <div key={idx} className="flex items-center gap-2 bg-white p-2.5 rounded-lg border border-slate-200">
+              <div key={idx} className="flex items-center gap-2 bg-white p-3 rounded-xl border border-slate-200">
                 <span className="text-xs font-bold text-slate-400 w-5">
                   #{idx + 1}
                 </span>
@@ -693,7 +699,7 @@ export default function AdminStopsRoutesPage() {
                     placeholder="Select waypoint..."
                   />
                 </div>
-                <div className="w-32">
+                <div className="w-36">
                   <InputField
                     type="number"
                     placeholder="Dist from start (km)"
@@ -704,7 +710,7 @@ export default function AdminStopsRoutesPage() {
                 <button
                   type="button"
                   onClick={() => removeIntermediateStopField(idx)}
-                  className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg"
+                  className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
                   title="Remove stop"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -728,6 +734,7 @@ export default function AdminStopsRoutesPage() {
               size="md"
               type="submit"
               loading={submittingRoute}
+              className="font-bold shadow-xs"
             >
               Save Route Corridor
             </Button>
@@ -745,7 +752,7 @@ export default function AdminStopsRoutesPage() {
       >
         {selectedRouteDetails && (
           <div className="space-y-4">
-            <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl flex items-center justify-between text-xs text-purple-900">
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs text-navy">
               <div>
                 <span className="font-bold">Total Distance:</span> {selectedRouteDetails.route.distanceKm || '—'} km
               </div>
@@ -757,25 +764,25 @@ export default function AdminStopsRoutesPage() {
               </div>
             </div>
 
-            <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-purple-200">
+            <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-300">
               {selectedRouteDetails.routeStops?.map((rs, idx) => (
                 <div key={rs._id} className="relative flex items-start gap-3">
-                  <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-purple-600 border-2 border-white shadow-xs" />
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 flex-1 flex items-center justify-between">
+                  <div className="absolute -left-6 top-1.5 w-3.5 h-3.5 rounded-full bg-primary border-2 border-white shadow-xs" />
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 flex-1 flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold px-1.5 py-0.5 bg-slate-100 rounded text-slate-700">
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-slate-100 rounded-md text-slate-700">
                           Seq #{rs.stopSequence}
                         </span>
-                        <span className="text-xs font-bold text-slate-900">
+                        <span className="text-xs font-bold text-navy">
                           {rs.stopId?.stopName}
                         </span>
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                      <div className="text-[11px] text-slate-500 font-medium mt-0.5">
                         {rs.stopId?.city}, {rs.stopId?.state || ''}
                       </div>
                     </div>
-                    <div className="text-right text-xs font-mono text-slate-600">
+                    <div className="text-right text-xs font-mono font-bold text-navy">
                       {rs.distanceFromStart || 0} km
                     </div>
                   </div>

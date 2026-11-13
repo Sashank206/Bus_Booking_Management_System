@@ -11,7 +11,10 @@ const {
   getAdminRefunds,
   simulateRefundStatus,
   getCancellationPolicyConfig,
-  updateCancellationPolicyConfig
+  updateCancellationPolicyConfig,
+  triggerTripLifecycleUpdate,
+  triggerInventoryCleanup,
+  getInventoryStats
 } = require('../controllers/adminController');
 const {
   getAdminAnalyticsOverview,
@@ -54,5 +57,10 @@ router.get('/reports/occupancy', getTripOccupancyReport);
 router.get('/reports/cancellations', getCancellationRefundReport);
 router.get('/reports/refunds', getCancellationRefundReport);
 router.get('/reports/trips/:tripId/manifest', getPassengerManifestReport);
+
+// Phase 9: Trip Lifecycle Management & Seat Inventory Cleanup
+router.post('/trips/update-statuses', triggerTripLifecycleUpdate);
+router.post('/inventory/cleanup', triggerInventoryCleanup);
+router.get('/inventory/stats', getInventoryStats);
 
 module.exports = router;

@@ -15,6 +15,7 @@ const {
 const AppError = require('../utils/appError');
 const asyncHandler = require('../middleware/asyncHandler');
 const { getCancellationPolicy } = require('../services/policyService');
+const { updateTripLifecycleStatuses } = require('../services/tripLifecycleService');
 
 /**
  * Mask phone number for public privacy
@@ -68,11 +69,53 @@ async function generateUniquePNR() {
 }
 
 /**
+ * Diagnostic logger for booking conflict events
+ * Records diagnostic attributes without logging credentials or private tokens
+ */
+function logBookingConflict({
+  requestId,
+  tripId,
+  customerId,
+  seatNumbers = [],
+  boardingStopId,
+  droppingStopId,
+  holdToken,
+  bookingId,
+  idempotencyKey,
+  code,
+  reason,
+  statusCode = 409
+}) {
+  const diagnostic = {
+    timestamp: new Date().toISOString(),
+    event: 'BOOKING_CONFLICT_DIAGNOSTIC',
+    requestId: requestId || `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    tripId: tripId ? tripId.toString() : null,
+    customerId: customerId ? customerId.toString() : null,
+    seatNumbers: Array.isArray(seatNumbers) ? seatNumbers : [],
+    boardingStopId: boardingStopId ? boardingStopId.toString() : null,
+    droppingStopId: droppingStopId ? droppingStopId.toString() : null,
+    holdToken: holdToken ? String(holdToken) : null,
+    bookingId: bookingId ? bookingId.toString() : null,
+    idempotencyKey: idempotencyKey ? String(idempotencyKey) : null,
+    conflictCode: code,
+    conflictReason: reason,
+    statusCode
+  };
+  console.warn('[BOOKING CONFLICT DIAGNOSTIC]', JSON.stringify(diagnostic));
+}
+
+/**
  * Acquire Atomic 10-Minute Seat Holds
  * POST /api/bookings/hold
  */
 const holdSeats = asyncHandler(async (req, res, next) => {
   const { tripId, seatNumbers, boardingStopId, droppingStopId } = req.body;
+  const requestId = req.id || req.headers['x-request-id'] || null;
+  const customerId = req.user?._id;
+  const normalizedSeats = Array.isArray(seatNumbers)
+    ? seatNumbers.map((s) => s.trim().toUpperCase())
+    : [];
 
   // 1. Validate Trip
   const trip = await Trip.findById(tripId).populate('busId');
@@ -80,7 +123,25 @@ const holdSeats = asyncHandler(async (req, res, next) => {
     return next(new AppError('Selected trip does not exist.', 404));
   }
   if (trip.tripStatus !== 'scheduled') {
-    return next(new AppError(`Cannot hold seats for a trip with status '${trip.tripStatus}'.`, 400));
+    logBookingConflict({
+      requestId,
+      tripId,
+      customerId,
+      seatNumbers: normalizedSeats,
+      boardingStopId,
+      droppingStopId,
+      code: 'TRIP_NOT_BOOKABLE',
+      reason: `Cannot hold seats for a trip with status '${trip.tripStatus}'`,
+      statusCode: 409
+    });
+    return next(
+      new AppError(
+        `This trip is no longer accepting bookings because its status is '${trip.tripStatus}'.`,
+        409,
+        null,
+        'TRIP_NOT_BOOKABLE'
+      )
+    );
   }
 
   // 2. Validate Boarding and Dropping Stops on this trip
@@ -113,10 +174,9 @@ const holdSeats = asyncHandler(async (req, res, next) => {
   const maxSeq = tripStops.length > 1 ? tripStops[tripStops.length - 1].stopSequence : 1;
   const segmentRatio = Math.min(1, Math.max(0.3, (toSequence - fromSequence) / Math.max(1, maxSeq)));
   const seatFare = Math.round(trip.baseFare * segmentRatio);
-  const totalAmount = seatFare * seatNumbers.length;
+  const totalAmount = seatFare * normalizedSeats.length;
 
   // 3. Atomic Conditional Seat Hold Acquisition (All-or-Nothing)
-  const normalizedSeats = seatNumbers.map((s) => s.trim().toUpperCase());
   const successfullyHeldSeats = [];
 
   for (const sNum of normalizedSeats) {
@@ -145,10 +205,24 @@ const holdSeats = asyncHandler(async (req, res, next) => {
     if (!isAvail) {
       // Rollback all holds acquired for this request
       await rollbackHolds(trip._id, successfullyHeldSeats, holdToken);
+      logBookingConflict({
+        requestId,
+        tripId,
+        customerId,
+        seatNumbers: [sNum],
+        boardingStopId,
+        droppingStopId,
+        holdToken,
+        code: 'SEAT_ALREADY_BOOKED',
+        reason: `Seat '${sNum}' is already held or booked for an overlapping segment`,
+        statusCode: 409
+      });
       return next(
         new AppError(
-          `Seat '${sNum}' is already held or booked for an overlapping segment. Please select another seat.`,
-          409
+          `Sorry, seat '${sNum}' has already been booked by another passenger. Please choose another seat.`,
+          409,
+          null,
+          'SEAT_ALREADY_BOOKED'
         )
       );
     }
@@ -267,8 +341,33 @@ const createBooking = asyncHandler(async (req, res, next) => {
     boardingStopId,
     droppingStopId,
     passengers,
-    holdToken
+    holdToken,
+    idempotencyKey: bodyIdempotencyKey
   } = req.body;
+
+  const idempotencyKey = bodyIdempotencyKey || req.headers['idempotency-key'] || null;
+  const requestId = req.id || req.headers['x-request-id'] || null;
+  const customerId = req.user?._id;
+  const requestedSeats = Array.isArray(passengers)
+    ? passengers.map((p) => (p.seatNumber || '').trim().toUpperCase())
+    : [];
+
+  const recordConflict = (code, reason, status = 409, extraBookingId = null) => {
+    logBookingConflict({
+      requestId,
+      tripId,
+      customerId,
+      seatNumbers: requestedSeats,
+      boardingStopId,
+      droppingStopId,
+      holdToken,
+      bookingId: extraBookingId,
+      idempotencyKey,
+      code,
+      reason,
+      statusCode: status
+    });
+  };
 
   // 1. Validate Trip
   const trip = await Trip.findById(tripId)
@@ -280,7 +379,15 @@ const createBooking = asyncHandler(async (req, res, next) => {
     return next(new AppError('Trip schedule not found.', 404));
   }
   if (trip.tripStatus !== 'scheduled') {
-    return next(new AppError(`Cannot book seats for a trip with status '${trip.tripStatus}'.`, 400));
+    recordConflict('TRIP_NOT_BOOKABLE', `Cannot book seats for a trip with status '${trip.tripStatus}'`);
+    return next(
+      new AppError(
+        `This trip is no longer accepting bookings because its status is '${trip.tripStatus}'.`,
+        409,
+        null,
+        'TRIP_NOT_BOOKABLE'
+      )
+    );
   }
 
   // 2. Validate Boarding and Dropping Stops
@@ -307,13 +414,70 @@ const createBooking = asyncHandler(async (req, res, next) => {
   const toSequence = destTs.stopSequence;
   const now = new Date();
 
-  // 3. Calculate fare per seat
+  // 3. Idempotency Key & Existing Booking Verification
+  if (idempotencyKey) {
+    const existingByIdempotency = await Booking.findOne({ idempotencyKey });
+    if (existingByIdempotency) {
+      if (existingByIdempotency.userId.toString() !== customerId.toString()) {
+        recordConflict(
+          'IDEMPOTENCY_KEY_CONFLICT',
+          `Idempotency key '${idempotencyKey}' was previously used for a different booking transaction.`
+        );
+        return next(
+          new AppError(
+            'This idempotency key has already been used for a different booking transaction.',
+            409,
+            null,
+            'IDEMPOTENCY_KEY_CONFLICT'
+          )
+        );
+      }
+
+      // Duplicate booking submission by same customer
+      recordConflict(
+        'BOOKING_ALREADY_PROCESSED',
+        `Booking ${existingByIdempotency.pnr} already exists for this idempotency key`,
+        409,
+        existingByIdempotency._id
+      );
+      return next(
+        new AppError(
+          'Your booking is already being processed. Please check My Bookings.',
+          409,
+          null,
+          'BOOKING_ALREADY_PROCESSED'
+        )
+      );
+    }
+  }
+
+  if (holdToken) {
+    const existingByHold = await Booking.findOne({ holdToken });
+    if (existingByHold) {
+      recordConflict(
+        'BOOKING_ALREADY_PROCESSED',
+        `Booking ${existingByHold.pnr} already exists for holdToken '${holdToken}'`,
+        409,
+        existingByHold._id
+      );
+      return next(
+        new AppError(
+          'Your booking is already being processed. Please check My Bookings.',
+          409,
+          null,
+          'BOOKING_ALREADY_PROCESSED'
+        )
+      );
+    }
+  }
+
+  // 4. Calculate fare per seat
   const maxSeq = tripStops.length > 1 ? tripStops[tripStops.length - 1].stopSequence : 1;
   const segmentRatio = Math.min(1, Math.max(0.3, (toSequence - fromSequence) / Math.max(1, maxSeq)));
   const segmentFare = Math.round(trip.baseFare * segmentRatio);
   const totalAmount = segmentFare * passengers.length;
 
-  // 4. Verify Seat Availability & Active Hold Status
+  // 5. Verify Seat Availability & Active Hold Status
   const seatInventories = [];
 
   for (const p of passengers) {
@@ -328,60 +492,194 @@ const createBooking = asyncHandler(async (req, res, next) => {
       return next(new AppError(`Seat '${sNum}' does not exist on this bus.`, 404));
     }
 
-    // Check if user currently holds this seat or if it is currently available
-    const hasMyHold = si.activeSegments?.some(
-      (seg) =>
-        seg.status === 'held' &&
-        seg.fromSequence === fromSequence &&
-        seg.toSequence === toSequence &&
-        seg.holdExpiresAt &&
-        new Date(seg.holdExpiresAt) > now &&
-        (seg.holdToken === holdToken || (req.user && seg.heldByUserId?.toString() === req.user._id.toString()))
+    const activeSegs = Array.isArray(si.activeSegments) ? si.activeSegments : [];
+    const overlappingSegs = activeSegs.filter(
+      (seg) => seg.fromSequence < toSequence && seg.toSequence > fromSequence
     );
 
-    if (!hasMyHold) {
-      // Check general availability if no existing hold was found
-      const isAvail = si.isAvailableForSegment
-        ? si.isAvailableForSegment(fromSequence, toSequence, now)
-        : (!si.activeSegments || si.activeSegments.every((seg) => {
-            if (seg.status === 'held' && seg.holdExpiresAt && new Date(seg.holdExpiresAt) <= now) return true;
-            return !(seg.fromSequence < toSequence && seg.toSequence > fromSequence);
-          }));
+    // A. Check for overlapping confirmed allocation
+    const confirmedSeg = overlappingSegs.find((seg) => seg.status === 'confirmed');
+    if (confirmedSeg) {
+      recordConflict(
+        'SEAT_ALREADY_BOOKED',
+        `Seat '${sNum}' is already confirmed on overlapping segment [${confirmedSeg.fromSequence}, ${confirmedSeg.toSequence})`
+      );
+      return next(
+        new AppError(
+          `Sorry, seat '${sNum}' has already been booked by another passenger. Please choose another seat.`,
+          409,
+          null,
+          'SEAT_ALREADY_BOOKED'
+        )
+      );
+    }
 
-      if (!isAvail) {
+    // B. Check for overlapping held segments
+    const heldSegs = overlappingSegs.filter((seg) => seg.status === 'held');
+
+    if (heldSegs.length > 0) {
+      for (const hSeg of heldSegs) {
+        const isExpired = hSeg.holdExpiresAt && new Date(hSeg.holdExpiresAt) <= now;
+
+        if (isExpired) {
+          if (holdToken && hSeg.holdToken === holdToken) {
+            recordConflict(
+              'SEAT_HOLD_EXPIRED',
+              `Seat hold on '${sNum}' has expired (holdExpiresAt: ${hSeg.holdExpiresAt})`
+            );
+            return next(
+              new AppError(
+                'Your seat hold has expired. Please select your seats again.',
+                409,
+                null,
+                'SEAT_HOLD_EXPIRED'
+              )
+            );
+          }
+          continue;
+        }
+
+        // Active unexpired hold!
+        // Enforce user ownership: hold cannot be claimed by a different user
+        if (hSeg.heldByUserId && customerId && hSeg.heldByUserId.toString() !== customerId.toString()) {
+          recordConflict(
+            'SEAT_HOLD_NOT_OWNED',
+            `Seat '${sNum}' is held by another user account (${hSeg.heldByUserId})`
+          );
+          return next(
+            new AppError(
+              'This seat hold belongs to another customer account.',
+              409,
+              null,
+              'SEAT_HOLD_NOT_OWNED'
+            )
+          );
+        }
+
+        const isHeldByMe =
+          (hSeg.heldByUserId && customerId && hSeg.heldByUserId.toString() === customerId.toString()) ||
+          (holdToken && hSeg.holdToken === holdToken);
+
+        if (!isHeldByMe) {
+          recordConflict(
+            'SEAT_HOLD_NOT_OWNED',
+            `Seat '${sNum}' is held by another user account (${hSeg.heldByUserId})`
+          );
+          return next(
+            new AppError(
+              'This seat hold belongs to another customer account.',
+              409,
+              null,
+              'SEAT_HOLD_NOT_OWNED'
+            )
+          );
+        }
+
+        if (holdToken && hSeg.holdToken && hSeg.holdToken !== holdToken) {
+          recordConflict(
+            'SEAT_HOLD_MISMATCH',
+            `Seat '${sNum}' hold token '${hSeg.holdToken}' does not match requested token '${holdToken}'`
+          );
+          return next(
+            new AppError(
+              'Selected seats do not match the held seats for this reservation.',
+              409,
+              null,
+              'SEAT_HOLD_MISMATCH'
+            )
+          );
+        }
+      }
+    } else if (holdToken) {
+      // User passed a holdToken, but this specific seat does not have a hold
+      const otherSeatWithToken = await SeatInventory.findOne({
+        tripId: trip._id,
+        'activeSegments.holdToken': holdToken
+      });
+      if (otherSeatWithToken) {
+        recordConflict(
+          'SEAT_HOLD_MISMATCH',
+          `Seat '${sNum}' was not held under holdToken '${holdToken}'`
+        );
         return next(
           new AppError(
-            `Seat '${sNum}' is no longer available for booking on this segment.`,
-            409
+            'Selected seats do not match the held seats for this reservation.',
+            409,
+            null,
+            'SEAT_HOLD_MISMATCH'
+          )
+        );
+      } else {
+        recordConflict(
+          'SEAT_HOLD_EXPIRED',
+          `Hold token '${holdToken}' not found on any seat for trip ${trip._id}`
+        );
+        return next(
+          new AppError(
+            'Your seat hold has expired. Please select your seats again.',
+            409,
+            null,
+            'SEAT_HOLD_EXPIRED'
           )
         );
       }
     }
 
+    // C. General segment availability verification
+    const isAvail = si.isAvailableForSegment
+      ? si.isAvailableForSegment(fromSequence, toSequence, now)
+      : true;
+
+    const hasOnlyMyHold =
+      heldSegs.length > 0 &&
+      heldSegs.every((seg) => {
+        const isExpired = seg.holdExpiresAt && new Date(seg.holdExpiresAt) <= now;
+        if (isExpired) return true;
+        return (
+          (seg.heldByUserId && customerId && seg.heldByUserId.toString() === customerId.toString()) ||
+          (holdToken && seg.holdToken === holdToken)
+        );
+      });
+
+    if (!isAvail && !hasOnlyMyHold) {
+      recordConflict(
+        'SEAT_ALREADY_BOOKED',
+        `Seat '${sNum}' is unavailable for booking on segment [${fromSequence}, ${toSequence})`
+      );
+      return next(
+        new AppError(
+          `Sorry, seat '${sNum}' has already been booked by another passenger. Please choose another seat.`,
+          409,
+          null,
+          'SEAT_ALREADY_BOOKED'
+        )
+      );
+    }
+
     seatInventories.push({ passenger: p, seatInventory: si, sNum });
   }
 
-  // 5. Generate unique PNR
+  // 6. Generate unique PNR
   const pnr = await generateUniquePNR();
   const holdExpiresAt = new Date(now.getTime() + 10 * 60 * 1000);
 
-  // 6. Multi-Document Atomic Creation with Compensational Rollback
+  // 7. Multi-Document Atomic Creation with Compensational Rollback
   let booking;
   const createdPassengers = [];
   const createdBookingSeats = [];
 
   try {
-    // A. Create Booking
     booking = await Booking.create({
       pnr,
       userId: req.user._id,
       tripId: trip._id,
       bookingStatus: 'pending_payment',
       totalAmount,
-      bookingDate: now
+      bookingDate: now,
+      holdToken: holdToken || undefined,
+      idempotencyKey: idempotencyKey || undefined
     });
 
-    // B. Create Passenger and BookingSeat records
     for (const item of seatInventories) {
       const pData = item.passenger;
       const si = item.seatInventory;
@@ -413,33 +711,43 @@ const createBooking = asyncHandler(async (req, res, next) => {
 
       // Link bookingSeatId into SeatInventory.activeSegments
       if (Array.isArray(si.activeSegments)) {
-        // Remove old hold for this holdToken if present
-        si.activeSegments = si.activeSegments.filter((seg) => seg.holdToken !== holdToken);
+        si.activeSegments = si.activeSegments.filter(
+          (seg) =>
+            !(
+              (holdToken && seg.holdToken === holdToken) ||
+              (seg.status === 'held' &&
+                seg.fromSequence === fromSequence &&
+                seg.toSequence === toSequence &&
+                seg.heldByUserId?.toString() === customerId.toString())
+            )
+        );
         si.activeSegments.push({
           bookingSeatId: bookingSeatDoc._id,
           fromSequence,
           toSequence,
           status: 'held',
           holdExpiresAt,
-          heldByUserId: req.user._id
+          holdToken: holdToken || undefined,
+          heldByUserId: req.user._id,
+          createdAt: now
         });
         await si.save();
       }
     }
 
-    // C. Initialize Pending Payment record with Idempotency Key
-    const idempotencyKey = `PAY_${pnr}_INIT_${Date.now()}`;
+    // Initialize Pending Payment
+    const paymentIdempotencyKey = `PAY_${pnr}_INIT_${Date.now()}`;
     await Payment.create({
       bookingId: booking._id,
       paymentReference: `SIM_REF_${pnr}`,
-      idempotencyKey,
+      idempotencyKey: paymentIdempotencyKey,
       paymentMethod: 'simulated_card',
       paymentAmount: totalAmount,
       paymentStatus: 'pending',
       provider: 'simulated_gateway'
     });
 
-    // D. Record Audit Log
+    // Record Audit Log
     await AuditLog.create({
       userId: req.user._id,
       action: 'BOOKING_CREATED',
@@ -463,7 +771,6 @@ const createBooking = asyncHandler(async (req, res, next) => {
       }
     });
   } catch (err) {
-    // Compensational Rollback on error
     if (booking && booking._id) {
       await Promise.allSettled([
         Booking.findByIdAndDelete(booking._id),
@@ -471,6 +778,31 @@ const createBooking = asyncHandler(async (req, res, next) => {
         BookingSeat.deleteMany({ bookingId: booking._id }),
         Payment.deleteMany({ bookingId: booking._id })
       ]);
+    }
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyValue || {})[0] || '';
+      if (field === 'idempotencyKey') {
+        recordConflict('IDEMPOTENCY_KEY_CONFLICT', 'Duplicate idempotency key conflict');
+        return next(
+          new AppError(
+            'This idempotency key has already been used for a different booking transaction.',
+            409,
+            null,
+            'IDEMPOTENCY_KEY_CONFLICT'
+          )
+        );
+      }
+      if (field === 'holdToken' || field === 'pnr') {
+        recordConflict('BOOKING_ALREADY_PROCESSED', 'Duplicate booking submission for holdToken');
+        return next(
+          new AppError(
+            'Your booking is already being processed. Please check My Bookings.',
+            409,
+            null,
+            'BOOKING_ALREADY_PROCESSED'
+          )
+        );
+      }
     }
     throw err;
   }
@@ -481,6 +813,11 @@ const createBooking = asyncHandler(async (req, res, next) => {
  * GET /api/bookings/my-bookings
  */
 const getMyBookings = asyncHandler(async (req, res, next) => {
+  // Authoritatively refresh trip lifecycle transitions (scheduled -> boarding -> in_progress -> completed)
+  await updateTripLifecycleStatuses().catch((err) =>
+    console.warn('[Trip Lifecycle Refresh Warning]', err.message)
+  );
+
   const { page = 1, limit = 10, status } = req.query;
 
   const query = { userId: req.user._id };
@@ -588,6 +925,8 @@ const getBookingById = asyncHandler(async (req, res, next) => {
     Payment.findOne({ bookingId: booking._id }).sort({ createdAt: -1 })
   ]);
 
+  const policy = getCancellationPolicy();
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -595,7 +934,13 @@ const getBookingById = asyncHandler(async (req, res, next) => {
       trip,
       passengers,
       bookingSeats,
-      payment
+      payment,
+      policySummary: {
+        cutoffHours: policy.cutoffHours,
+        policyName: policy.policyName,
+        tiers: policy.tiers
+      },
+      qrPayload: `BUSGO|${booking.pnr}|${booking._id}|${booking.tripId}|${booking.totalAmount}|${booking.bookingStatus}`
     }
   });
 });

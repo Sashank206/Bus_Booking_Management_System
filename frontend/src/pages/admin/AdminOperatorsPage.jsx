@@ -153,8 +153,8 @@ export default function AdminOperatorsPage() {
       key: 'companyName',
       render: (row) => (
         <div>
-          <div className="font-bold text-slate-900">{row.companyName}</div>
-          <div className="text-xs font-mono text-slate-500">
+          <div className="font-black text-navy">{row.companyName}</div>
+          <div className="text-xs font-mono text-slate-500 font-bold mt-0.5">
             Reg: {row.registrationNumber}
           </div>
         </div>
@@ -165,13 +165,13 @@ export default function AdminOperatorsPage() {
       key: 'contactPerson',
       render: (row) => (
         <div className="text-xs">
-          <div className="font-semibold text-slate-800">{row.contactPerson}</div>
-          <div className="text-slate-500 flex items-center gap-1 mt-0.5">
+          <div className="font-bold text-navy">{row.contactPerson}</div>
+          <div className="text-slate-500 flex items-center gap-1 mt-0.5 font-medium">
             <Mail className="w-3 h-3 text-slate-400" />
             {row.userId?.email || '—'}
           </div>
           {row.userId?.phone && (
-            <div className="text-slate-500 flex items-center gap-1 mt-0.5">
+            <div className="text-slate-500 flex items-center gap-1 mt-0.5 font-mono">
               <Phone className="w-3 h-3 text-slate-400" />
               {row.userId.phone}
             </div>
@@ -195,7 +195,7 @@ export default function AdminOperatorsPage() {
       header: 'Registered',
       key: 'createdAt',
       render: (row) => (
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-500 font-medium">
           {new Date(row.createdAt).toLocaleDateString()}
         </span>
       )
@@ -220,7 +220,7 @@ export default function AdminOperatorsPage() {
                 size="sm"
                 icon={CheckCircle}
                 onClick={() => handleApprove(row)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
               >
                 Approve
               </Button>
@@ -229,7 +229,7 @@ export default function AdminOperatorsPage() {
                 size="sm"
                 icon={XCircle}
                 onClick={() => handleOpenReject(row)}
-                className="text-rose-600 hover:bg-rose-50 border-rose-200"
+                className="text-rose-600 hover:bg-rose-50 border-rose-200 font-bold"
               >
                 Reject
               </Button>
@@ -249,7 +249,7 @@ export default function AdminOperatorsPage() {
                   loading: false
                 })
               }
-              className="text-amber-600 hover:bg-amber-50 border-amber-200"
+              className="text-amber-600 hover:bg-amber-50 border-amber-200 font-semibold"
             >
               Suspend
             </Button>
@@ -268,7 +268,7 @@ export default function AdminOperatorsPage() {
                   loading: false
                 })
               }
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-emerald-600 hover:bg-emerald-700 font-bold"
             >
               Activate
             </Button>
@@ -283,11 +283,11 @@ export default function AdminOperatorsPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-navy tracking-tight">
             Operator Management &amp; Approvals
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Vet transport agencies, inspect business credentials, and control trip publishing privileges.
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">
+            Vet transport agencies, inspect business credentials, and manage platform publishing privileges.
           </p>
         </div>
 
@@ -297,15 +297,16 @@ export default function AdminOperatorsPage() {
           icon={RefreshCw}
           onClick={fetchOperators}
           loading={loading}
+          className="font-bold"
         >
           Refresh
         </Button>
       </div>
 
       {/* Filter Tabs & Search Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
           {[
             { id: 'all', label: 'All Operators' },
             { id: 'pending', label: 'Pending Approval' },
@@ -315,10 +316,10 @@ export default function AdminOperatorsPage() {
             <button
               key={tab.id}
               onClick={() => setStatusFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                 statusFilter === tab.id
-                  ? 'bg-purple-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  ? 'bg-primary text-white shadow-2xs'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-navy'
               }`}
             >
               {tab.label}
@@ -327,7 +328,7 @@ export default function AdminOperatorsPage() {
         </div>
 
         {/* Search Input */}
-        <div className="w-full md:w-72">
+        <div className="w-full md:w-80">
           <InputField
             placeholder="Search company, reg #, email..."
             icon={Search}
@@ -362,63 +363,63 @@ export default function AdminOperatorsPage() {
       >
         {selectedOperator && (
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200">
               <div>
-                <span className="text-slate-500 block text-[11px]">Company Name</span>
-                <span className="font-bold text-sm text-slate-900">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Company Name</span>
+                <span className="font-black text-base text-navy">
                   {selectedOperator.companyName}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-slate-500 block text-[11px] mb-1">Status</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">Status</span>
                 <StatusBadge status={selectedOperator.approvalStatus} />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="p-3 border border-slate-100 rounded-lg">
-                <span className="text-slate-500 block mb-0.5">Registration / GST</span>
-                <span className="font-mono font-semibold text-slate-800">
+              <div className="p-3.5 border border-slate-200 rounded-xl">
+                <span className="text-slate-400 font-bold uppercase text-[10px] block mb-0.5">Registration / GST</span>
+                <span className="font-mono font-bold text-navy">
                   {selectedOperator.registrationNumber}
                 </span>
               </div>
-              <div className="p-3 border border-slate-100 rounded-lg">
-                <span className="text-slate-500 block mb-0.5">Contact Person</span>
-                <span className="font-semibold text-slate-800">
+              <div className="p-3.5 border border-slate-200 rounded-xl">
+                <span className="text-slate-400 font-bold uppercase text-[10px] block mb-0.5">Contact Person</span>
+                <span className="font-bold text-navy">
                   {selectedOperator.contactPerson}
                 </span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 border border-slate-100 rounded-lg">
-                <span className="text-slate-500 block mb-0.5">User Email</span>
-                <span className="font-semibold text-slate-800">
+              <div className="p-3.5 border border-slate-200 rounded-xl">
+                <span className="text-slate-400 font-bold uppercase text-[10px] block mb-0.5">User Email</span>
+                <span className="font-semibold text-navy font-mono">
                   {selectedOperator.userId?.email || '—'}
                 </span>
               </div>
-              <div className="p-3 border border-slate-100 rounded-lg">
-                <span className="text-slate-500 block mb-0.5">Contact Phone</span>
-                <span className="font-semibold text-slate-800">
+              <div className="p-3.5 border border-slate-200 rounded-xl">
+                <span className="text-slate-400 font-bold uppercase text-[10px] block mb-0.5">Contact Phone</span>
+                <span className="font-semibold text-navy font-mono">
                   {selectedOperator.userId?.phone || '—'}
                 </span>
               </div>
             </div>
 
-            {selectedOperator.address && (
-              <div className="p-3 border border-slate-100 rounded-lg">
-                <span className="text-slate-500 block mb-0.5">Registered Address</span>
-                <span className="text-slate-700">
-                  {typeof selectedOperator.address === 'string'
-                    ? selectedOperator.address
-                    : `${selectedOperator.address.street || ''}, ${selectedOperator.address.city || ''}, ${selectedOperator.address.state || ''} ${selectedOperator.address.pincode || ''}`}
+            {selectedOperator.businessAddress && (
+              <div className="p-3.5 border border-slate-200 rounded-xl">
+                <span className="text-slate-400 font-bold uppercase text-[10px] block mb-0.5">Registered Address</span>
+                <span className="text-slate-800 font-medium">
+                  {typeof selectedOperator.businessAddress === 'string'
+                    ? selectedOperator.businessAddress
+                    : `${selectedOperator.businessAddress.street || ''}, ${selectedOperator.businessAddress.city || ''}, ${selectedOperator.businessAddress.state || ''}`}
                 </span>
               </div>
             )}
 
             {selectedOperator.rejectionReason && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700">
-                <span className="font-semibold block mb-0.5">Rejection Reason:</span>
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-medium">
+                <span className="font-bold block mb-0.5">Rejection Reason:</span>
                 {selectedOperator.rejectionReason}
               </div>
             )}
@@ -446,15 +447,15 @@ export default function AdminOperatorsPage() {
       >
         <form onSubmit={handleConfirmReject} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Rejection Reason <span className="text-rose-500">*</span>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Rejection Reason <span className="text-primary">*</span>
             </label>
             <textarea
               required
               rows={3}
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              className="block w-full rounded-lg border border-slate-300 p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500"
+              className="block w-full rounded-xl border border-slate-300 p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary font-medium"
               placeholder="Explain why the application is rejected..."
             />
           </div>
@@ -474,6 +475,7 @@ export default function AdminOperatorsPage() {
               size="md"
               type="submit"
               loading={submittingReject}
+              className="font-bold shadow-xs"
             >
               Confirm Rejection
             </Button>

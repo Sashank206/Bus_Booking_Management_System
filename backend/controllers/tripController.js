@@ -21,7 +21,7 @@ const { verifyOperatorOwnership } = require('../middleware/auth');
  * GET /api/trips
  */
 const getTrips = asyncHandler(async (req, res, next) => {
-  const { operatorId, routeId, date, status, page = 1, limit = 15 } = req.query;
+  const { operatorId, routeId, date, status, search, page = 1, limit = 15 } = req.query;
 
   const query = {};
 
@@ -39,7 +39,7 @@ const getTrips = asyncHandler(async (req, res, next) => {
     query.routeId = routeId;
   }
 
-  if (status) {
+  if (status && status !== 'all') {
     query.tripStatus = status;
   }
 
@@ -49,6 +49,41 @@ const getTrips = asyncHandler(async (req, res, next) => {
     const endOfDay = new Date(date);
     endOfDay.setUTCHours(23, 59, 59, 999);
     query.travelDate = { $gte: startOfDay, $lte: endOfDay };
+  }
+
+  // Keyword search matching trip ID, bus numbers, or route name
+  if (search && search.trim()) {
+    const s = search.trim();
+    const orConditions = [];
+
+    if (mongoose.Types.ObjectId.isValid(s)) {
+      orConditions.push({ _id: s });
+    }
+
+    const [matchingBuses, matchingRoutes] = await Promise.all([
+      Bus.find({
+        $or: [
+          { busNumber: { $regex: s, $options: 'i' } },
+          { registrationNumber: { $regex: s, $options: 'i' } }
+        ]
+      }).select('_id'),
+      Route.find({
+        routeName: { $regex: s, $options: 'i' }
+      }).select('_id')
+    ]);
+
+    if (matchingBuses.length > 0) {
+      orConditions.push({ busId: { $in: matchingBuses.map((b) => b._id) } });
+    }
+    if (matchingRoutes.length > 0) {
+      orConditions.push({ routeId: { $in: matchingRoutes.map((r) => r._id) } });
+    }
+
+    if (orConditions.length > 0) {
+      query.$or = orConditions;
+    } else {
+      query._id = new mongoose.Types.ObjectId(); // No matches
+    }
   }
 
   const pageNum = Math.max(1, parseInt(page, 10));
@@ -320,6 +355,10 @@ const cancelTrip = asyncHandler(async (req, res, next) => {
 
   if (trip.tripStatus === 'cancelled') {
     return next(new AppError('Trip is already cancelled.', 400));
+  }
+
+  if (trip.tripStatus === 'completed') {
+    return next(new AppError('Completed trips cannot be cancelled.', 400));
   }
 
   trip.tripStatus = 'cancelled';

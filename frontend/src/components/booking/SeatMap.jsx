@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Armchair, Bed, Lock, Check, AlertCircle } from 'lucide-react';
+import { Armchair, Bed, Lock, Check, AlertCircle, Compass } from 'lucide-react';
 
 export default function SeatMap({
   seatLayout,
@@ -13,18 +13,19 @@ export default function SeatMap({
 
   if (loading) {
     return (
-      <div className="py-12 flex flex-col items-center justify-center space-y-3">
-        <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs font-semibold text-slate-500">Loading live cabin seat availability...</p>
+      <div className="py-12 flex flex-col items-center justify-center space-y-3 bg-white rounded-xl border border-slate-200">
+        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-semibold text-slate-600">Loading live cabin seat layout & availability...</p>
       </div>
     );
   }
 
   if (!seatLayout || !seatLayout.seats || seatLayout.seats.length === 0) {
     return (
-      <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
-        <AlertCircle className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-        <p className="text-xs font-medium text-slate-600">No seat layout configured for this vehicle.</p>
+      <div className="py-10 text-center bg-white rounded-xl border border-dashed border-slate-300">
+        <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+        <p className="text-sm font-semibold text-slate-700">No seat layout configured for this bus.</p>
+        <p className="text-xs text-slate-500 mt-1">Please select another bus service.</p>
       </div>
     );
   }
@@ -40,7 +41,7 @@ export default function SeatMap({
   const aisleIndex = Math.ceil(columns / 2);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Deck Selector (if multi-deck) */}
       {deckCount > 1 && (
         <div className="flex items-center justify-center gap-2">
@@ -49,10 +50,10 @@ export default function SeatMap({
               key={deck}
               type="button"
               onClick={() => setSelectedDeck(deck)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs ${
                 selectedDeck === deck
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-navy text-white shadow-sm'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
               }`}
             >
               {deck === 1 ? 'Lower Deck' : 'Upper Deck'}
@@ -61,78 +62,92 @@ export default function SeatMap({
         </div>
       )}
 
-      {/* Seat Map Cabin Frame */}
-      <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 max-w-md mx-auto">
-        {/* Cabin Front / Driver Header */}
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200">
+      {/* Bus Chassis Shell Container */}
+      <div className="max-w-md mx-auto bg-white rounded-3xl border-2 border-slate-200 p-6 shadow-sm relative overflow-hidden">
+        {/* Subtle Bus Windshield Arc at Top */}
+        <div className="w-24 h-1.5 bg-slate-300 rounded-full mx-auto mb-4 opacity-70" />
+
+        {/* Cabin Front & Steering Wheel Header */}
+        <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-white px-2.5 py-1 rounded-md border border-slate-200">
-              Front of Bus
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+              Front Cabin
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-slate-400 text-xs font-medium">
-            <div className="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center">
-              <span className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
+
+          <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
+            <span className="text-[11px] font-bold text-slate-500">Driver</span>
+            {/* Steering Wheel Graphic */}
+            <div className="w-7 h-7 rounded-full border-2 border-slate-400 flex items-center justify-center relative bg-slate-50">
+              <div className="w-2 h-2 rounded-full bg-slate-500" />
+              <div className="absolute top-1 bottom-1 w-0.5 bg-slate-400" />
+              <div className="absolute left-1 right-1 h-0.5 bg-slate-400" />
             </div>
-            <span className="text-[11px]">Driver Cabin</span>
           </div>
         </div>
 
         {/* Seats Grid */}
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {rowNumbers.map((rowNum) => {
             const seatsInRow = filteredSeats.filter((s) => s.row === rowNum);
             if (seatsInRow.length === 0) return null;
 
             return (
               <div key={rowNum} className="flex items-center justify-between gap-3">
-                {/* Left Side Seats */}
+                {/* Left Window / Aisle Seats */}
                 <div className="flex items-center gap-2">
                   {colNumbers
                     .filter((c) => c <= aisleIndex)
                     .map((colNum) => {
                       const seat = seatsInRow.find((s) => s.col === colNum);
-                      return renderSeatItem(seat, selectedSeats, onSeatToggle, maxSelectable);
+                      return renderSeatItem(seat, selectedSeats, onSeatToggle, maxSelectable, segmentFare);
                     })}
                 </div>
 
-                {/* Aisle */}
-                <div className="w-6 flex items-center justify-center">
-                  <span className="text-[10px] font-semibold text-slate-300 select-none">
-                    {rowNum}
+                {/* Center Aisle Indicator */}
+                <div className="w-8 flex items-center justify-center">
+                  <span className="text-[10px] font-mono font-bold text-slate-300 select-none">
+                    R{rowNum}
                   </span>
                 </div>
 
-                {/* Right Side Seats */}
+                {/* Right Aisle / Window Seats */}
                 <div className="flex items-center gap-2">
                   {colNumbers
                     .filter((c) => c > aisleIndex)
                     .map((colNum) => {
                       const seat = seatsInRow.find((s) => s.col === colNum);
-                      return renderSeatItem(seat, selectedSeats, onSeatToggle, maxSelectable);
+                      return renderSeatItem(seat, selectedSeats, onSeatToggle, maxSelectable, segmentFare);
                     })}
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* Rear of Bus Indicator */}
+        <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-center">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Rear of Bus
+          </span>
+        </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-4 text-xs pt-2">
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded-md bg-white border border-slate-300 flex items-center justify-center text-slate-600 shadow-2xs" />
+      {/* Seat Legend */}
+      <div className="bg-white rounded-xl border border-slate-200 p-3 max-w-md mx-auto flex flex-wrap items-center justify-center gap-5 text-xs">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-md bg-white border-2 border-slate-300 shadow-2xs" />
           <span className="text-slate-600 font-medium">Available</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded-md bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold shadow-2xs">
-            <Check className="w-3 h-3" />
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-md bg-primary text-white flex items-center justify-center shadow-2xs">
+            <Check className="w-2.5 h-2.5" />
           </div>
-          <span className="text-emerald-700 font-bold">Selected</span>
+          <span className="text-primary font-bold">Selected</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded-md bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-400">
-            <Lock className="w-2.5 h-2.5" />
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-md bg-slate-200 border border-slate-300 flex items-center justify-center">
+            <Lock className="w-2.5 h-2.5 text-slate-400" />
           </div>
           <span className="text-slate-400 font-medium">Booked / Held</span>
         </div>
@@ -141,14 +156,15 @@ export default function SeatMap({
   );
 }
 
-function renderSeatItem(seat, selectedSeats, onSeatToggle, maxSelectable) {
+function renderSeatItem(seat, selectedSeats, onSeatToggle, maxSelectable, segmentFare) {
   if (!seat) {
-    return <div key={Math.random()} className="w-9 h-9" />;
+    return <div key={`empty-${Math.random()}`} className="w-10 h-10" />;
   }
 
   const isSelected = selectedSeats.includes(seat.seatNumber);
   const isAvailable = seat.isAvailable;
   const isSleeper = seat.seatType === 'sleeper';
+  const effectiveFare = seat.fare || segmentFare;
 
   const handleClick = () => {
     if (!isAvailable) return;
@@ -165,38 +181,37 @@ function renderSeatItem(seat, selectedSeats, onSeatToggle, maxSelectable) {
       type="button"
       onClick={handleClick}
       disabled={!isAvailable}
-      title={`Seat ${seat.seatNumber} (${seat.seatType}) - ₹${seat.fare || 0}${
-        !isAvailable ? ' - Occupied/Held' : ''
+      title={`Seat ${seat.seatNumber} (${seat.seatType || 'seater'}) - ₹${effectiveFare}${
+        !isAvailable ? ' - Occupied/Held' : ' - Click to select'
       }`}
-      className={`group relative flex flex-col items-center justify-center rounded-lg transition-all select-none ${
-        isSleeper ? 'w-10 h-14' : 'w-9 h-10'
+      className={`group relative flex flex-col items-center justify-center rounded-xl transition-all select-none ${
+        isSleeper ? 'w-11 h-16' : 'w-10 h-11'
       } ${
         !isAvailable
-          ? 'bg-slate-200/90 text-slate-400 border border-slate-300 cursor-not-allowed opacity-60'
+          ? 'bg-slate-100 text-slate-300 border border-slate-200 cursor-not-allowed'
           : isSelected
-          ? 'bg-emerald-600 text-white border-2 border-emerald-700 shadow-sm transform scale-105'
-          : 'bg-white text-slate-700 border border-slate-300 hover:border-amber-500 hover:shadow-xs active:scale-95'
+          ? 'bg-primary text-white border-2 border-primary-hover shadow-md scale-105'
+          : 'bg-white text-slate-700 border-2 border-slate-300 hover:border-primary hover:shadow-xs active:scale-95'
       }`}
     >
       {/* Icon */}
       {isSleeper ? (
-        <Bed className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
+        <Bed className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : isAvailable ? 'text-slate-600' : 'text-slate-300'}`} />
       ) : (
-        <Armchair className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
+        <Armchair className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : isAvailable ? 'text-slate-600' : 'text-slate-300'}`} />
       )}
 
       {/* Seat Number */}
-      <span className={`text-[10px] font-bold mt-0.5 ${isSelected ? 'text-white' : 'text-slate-800'}`}>
+      <span className={`text-[10px] font-black mt-0.5 tracking-tight ${isSelected ? 'text-white' : isAvailable ? 'text-slate-800' : 'text-slate-400'}`}>
         {seat.seatNumber}
       </span>
 
-      {/* Lock for occupied */}
+      {/* Subtle Lock overlay if occupied */}
       {!isAvailable && (
-        <div className="absolute inset-0 bg-slate-900/10 rounded-lg flex items-center justify-center">
-          <Lock className="w-3 h-3 text-slate-500" />
+        <div className="absolute inset-0 bg-slate-200/40 rounded-xl flex items-center justify-center pointer-events-none">
+          <Lock className="w-3 h-3 text-slate-400" />
         </div>
       )}
     </button>
   );
 }
-

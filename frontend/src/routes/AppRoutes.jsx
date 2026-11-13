@@ -36,6 +36,7 @@ import OperatorReportsPage from '../pages/operator/OperatorReportsPage';
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminOperatorsPage from '../pages/admin/AdminOperatorsPage';
 import AdminStopsRoutesPage from '../pages/admin/AdminStopsRoutesPage';
+import AdminTripsPage from '../pages/admin/AdminTripsPage';
 import AdminAuditLogsPage from '../pages/admin/AdminAuditLogsPage';
 import AdminBookingsRefundsPage from '../pages/admin/AdminBookingsRefundsPage';
 import AdminReportsPage from '../pages/admin/AdminReportsPage';
@@ -102,7 +103,7 @@ export default function AppRoutes() {
         <Route path="reports" element={<AdminReportsPage />} />
         <Route path="operators" element={<AdminOperatorsPage />} />
         <Route path="stops-routes" element={<AdminStopsRoutesPage />} />
-        <Route path="trips" element={<AdminStopsRoutesPage />} />
+        <Route path="trips" element={<AdminTripsPage />} />
         <Route path="bookings" element={<AdminBookingsRefundsPage />} />
         <Route path="audit-logs" element={<AdminAuditLogsPage />} />
       </Route>

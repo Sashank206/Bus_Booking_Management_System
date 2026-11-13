@@ -33,6 +33,8 @@ api.interceptors.response.use(
 
     const errorPayload = {
       status: error.response?.status || 500,
+      code: error.response?.data?.code || null,
+      success: false,
       message:
         error.response?.data?.message ||
         error.message ||

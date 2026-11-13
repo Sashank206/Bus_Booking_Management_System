@@ -4,34 +4,35 @@
  * rather than programmer bugs.
  */
 class AppError extends Error {
-  constructor(message, statusCode = 500, errors = null) {
+  constructor(message, statusCode = 500, errors = null, code = null) {
     super(message);
     this.statusCode = statusCode;
     this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
     this.isOperational = true;
     this.errors = errors;
+    this.code = code;
 
     Error.captureStackTrace(this, this.constructor);
   }
 
-  static badRequest(message = 'Bad Request', errors = null) {
-    return new AppError(message, 400, errors);
+  static badRequest(message = 'Bad Request', errors = null, code = null) {
+    return new AppError(message, 400, errors, code);
   }
 
-  static unauthorized(message = 'Unauthorized access. Please log in.') {
-    return new AppError(message, 401);
+  static unauthorized(message = 'Unauthorized access. Please log in.', code = null) {
+    return new AppError(message, 401, null, code);
   }
 
-  static forbidden(message = 'Forbidden. You do not have permission to perform this action.') {
-    return new AppError(message, 403);
+  static forbidden(message = 'Forbidden. You do not have permission to perform this action.', code = null) {
+    return new AppError(message, 403, null, code);
   }
 
-  static notFound(message = 'Requested resource not found.') {
-    return new AppError(message, 404);
+  static notFound(message = 'Requested resource not found.', code = null) {
+    return new AppError(message, 404, null, code);
   }
 
-  static conflict(message = 'Conflict. A resource with the provided details already exists.') {
-    return new AppError(message, 409);
+  static conflict(message = 'Conflict. A resource with the provided details already exists.', code = null) {
+    return new AppError(message, 409, null, code);
   }
 
   static internal(message = 'Internal server error.') {

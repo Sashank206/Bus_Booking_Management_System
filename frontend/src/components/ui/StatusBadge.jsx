@@ -1,43 +1,43 @@
 const statusConfig = {
   // Booking & Payment
-  confirmed: { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Confirmed' },
-  successful: { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Successful' },
-  pending_payment: { bg: 'bg-amber-50 text-amber-700 border-amber-200', label: 'Pending Payment' },
-  partially_cancelled: { bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', label: 'Partially Cancelled' },
-  cancelled: { bg: 'bg-rose-50 text-rose-700 border-rose-200', label: 'Cancelled' },
-  failed: { bg: 'bg-rose-50 text-rose-700 border-rose-200', label: 'Failed' },
-  expired: { bg: 'bg-slate-100 text-slate-600 border-slate-200', label: 'Expired' },
-  released: { bg: 'bg-slate-100 text-slate-600 border-slate-200', label: 'Released' },
-  held: { bg: 'bg-amber-50 text-amber-700 border-amber-200', label: 'Temporary Hold' },
+  confirmed: { bg: 'bg-[#ECFDF3] text-[#16865C] border-[#ABEFC6]', dot: 'bg-[#16865C]', label: 'Confirmed' },
+  successful: { bg: 'bg-[#ECFDF3] text-[#16865C] border-[#ABEFC6]', dot: 'bg-[#16865C]', label: 'Successful' },
+  pending_payment: { bg: 'bg-[#FFFAEB] text-[#B54708] border-[#FEDF89]', dot: 'bg-[#B54708]', label: 'Payment Pending' },
+  partially_cancelled: { bg: 'bg-[#EFF8FF] text-[#175CD3] border-[#B2DDFF]', dot: 'bg-[#175CD3]', label: 'Partially Cancelled' },
+  cancelled: { bg: 'bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]', dot: 'bg-[#B42318]', label: 'Cancelled' },
+  failed: { bg: 'bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]', dot: 'bg-[#B42318]', label: 'Failed' },
+  expired: { bg: 'bg-[#F8F9FA] text-[#475467] border-[#EAECF0]', dot: 'bg-[#98A2B3]', label: 'Expired' },
+  released: { bg: 'bg-[#F8F9FA] text-[#475467] border-[#EAECF0]', dot: 'bg-[#98A2B3]', label: 'Released' },
+  held: { bg: 'bg-[#FFF6ED] text-[#C4320A] border-[#FEE4E2]', dot: 'bg-[#C4320A]', label: 'Hold Active' },
 
   // Operator & Account Status
-  approved: { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Approved' },
-  pending: { bg: 'bg-amber-50 text-amber-700 border-amber-200', label: 'Pending Approval' },
-  rejected: { bg: 'bg-rose-50 text-rose-700 border-rose-200', label: 'Rejected' },
-  suspended: { bg: 'bg-rose-50 text-rose-700 border-rose-200', label: 'Suspended' },
-  active: { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Active' },
+  approved: { bg: 'bg-[#ECFDF3] text-[#16865C] border-[#ABEFC6]', dot: 'bg-[#16865C]', label: 'Approved' },
+  pending: { bg: 'bg-[#FFFAEB] text-[#B54708] border-[#FEDF89]', dot: 'bg-[#B54708]', label: 'Pending Review' },
+  rejected: { bg: 'bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]', dot: 'bg-[#B42318]', label: 'Rejected' },
+  suspended: { bg: 'bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]', dot: 'bg-[#B42318]', label: 'Suspended' },
+  active: { bg: 'bg-[#ECFDF3] text-[#16865C] border-[#ABEFC6]', dot: 'bg-[#16865C]', label: 'Active' },
 
-  // Trip Status
-  scheduled: { bg: 'bg-blue-50 text-blue-700 border-blue-200', label: 'Scheduled' },
-  boarding: { bg: 'bg-amber-50 text-amber-700 border-amber-200', label: 'Boarding' },
-  in_progress: { bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', label: 'In Progress' },
-  completed: { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Completed' }
+  // Trip Lifecycle Status
+  scheduled: { bg: 'bg-[#EFF8FF] text-[#175CD3] border-[#B2DDFF]', dot: 'bg-[#175CD3]', label: 'Scheduled' },
+  boarding: { bg: 'bg-[#FFFAEB] text-[#B54708] border-[#FEDF89]', dot: 'bg-[#B54708]', label: 'Boarding' },
+  in_progress: { bg: 'bg-[#F4F3FF] text-[#5925DC] border-[#D9D6FE]', dot: 'bg-[#5925DC]', label: 'In Progress' },
+  completed: { bg: 'bg-[#ECFDF3] text-[#16865C] border-[#ABEFC6]', dot: 'bg-[#16865C]', label: 'Completed' }
 };
 
 export default function StatusBadge({ status, className = '' }) {
-  const normalized = `${status || ''}`.toLowerCase();
+  const normalized = `${status || ''}`.toLowerCase().trim();
   const config = statusConfig[normalized] || {
-    bg: 'bg-slate-100 text-slate-700 border-slate-200',
-    label: status || 'Unknown'
+    bg: 'bg-[#F8F9FA] text-[#475467] border-[#EAECF0]',
+    dot: 'bg-[#98A2B3]',
+    label: status ? status.replace(/_/g, ' ') : 'Unknown'
   };
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${config.bg} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold border ${config.bg} ${className}`}
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5 opacity-70"></span>
-      {config.label}
+      <span className={`w-1.5 h-1.5 rounded-full ${config.dot} shrink-0`}></span>
+      <span className="capitalize">{config.label}</span>
     </span>
   );
 }
-

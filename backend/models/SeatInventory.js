@@ -22,6 +22,14 @@ const activeSegmentSchema = new mongoose.Schema(
     holdExpiresAt: {
       type: Date
     },
+    holdToken: {
+      type: String,
+      trim: true
+    },
+    heldByUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
     createdAt: {
       type: Date,
       default: Date.now

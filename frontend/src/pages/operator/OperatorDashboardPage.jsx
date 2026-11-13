@@ -17,7 +17,8 @@ import {
   TrendingUp,
   FileText,
   XCircle,
-  MapPin
+  MapPin,
+  ShieldCheck
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import useToast from '../../hooks/useToast';
@@ -99,43 +100,43 @@ export default function OperatorDashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 text-white rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      <div className="bg-navy text-white rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs uppercase tracking-wider font-semibold text-amber-400">
-              Transport Operator Console
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xs uppercase tracking-wider font-extrabold text-primary">
+              Fleet Operations Console
             </span>
             <StatusBadge status={operator?.approvalStatus || 'pending'} />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
             {operator?.companyName || user?.name}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-            Fleet management, trip scheduling, passenger manifests, occupancy auditing, and revenue reconciliation.
+          <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl leading-relaxed">
+            Manage your bus fleet, schedule intercity trips, download official passenger manifests, and track route occupancy.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <Link to="/operator/manifests">
-            <Button variant="secondary" size="sm" icon={FileText} className="text-xs">
-              Boarding Manifests
+            <Button variant="navy" size="sm" icon={FileText} className="text-xs bg-slate-800 hover:bg-slate-700 border-slate-700">
+              Passenger Manifests
             </Button>
           </Link>
           <Link to="/operator/reports">
-            <Button variant="outline" size="sm" icon={TrendingUp} className="bg-white/10 text-white border-white/20 hover:bg-white/20 text-xs">
-              Fleet Reports
+            <Button variant="navy" size="sm" icon={TrendingUp} className="text-xs bg-slate-800 hover:bg-slate-700 border-slate-700">
+              Fleet Analytics
             </Button>
           </Link>
 
           {isOperatorApproved && (
             <div className="flex gap-2">
               <Link to="/operator/buses">
-                <Button variant="accent" size="sm" icon={Plus} className="text-xs">
+                <Button variant="secondary" size="sm" icon={Plus} className="text-xs font-bold">
                   Add Bus
                 </Button>
               </Link>
               <Link to="/operator/trips">
-                <Button variant="primary" size="sm" icon={Calendar} className="text-xs">
+                <Button variant="primary" size="sm" icon={Calendar} className="text-xs font-bold shadow-xs">
                   Schedule Trip
                 </Button>
               </Link>
@@ -146,14 +147,12 @@ export default function OperatorDashboardPage() {
 
       {/* Pending Approval Notice */}
       {!isOperatorApproved && (
-        <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-4">
-          <div className="p-2 bg-amber-500/20 text-amber-600 rounded-xl shrink-0 mt-0.5">
-            <AlertCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-amber-900">Application Under Administrative Review</h3>
-            <p className="text-xs text-amber-800/90 mt-1 leading-relaxed">
-              Your transport operator registration has been received and is pending validation by platform administrators. Once approved, you can schedule bus trips, configure seat inventories, and receive passenger bookings.
+        <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3.5 text-xs text-amber-950">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <h3 className="text-sm font-bold text-amber-950">Operator Application Under Administrative Verification</h3>
+            <p className="text-amber-850 leading-relaxed">
+              Your transport operator registration has been received and is pending verification by BusGo platform administrators. Once approved, you can schedule bus trips, configure live seat inventories, and receive passenger bookings.
             </p>
           </div>
         </div>
@@ -170,49 +169,52 @@ export default function OperatorDashboardPage() {
       />
 
       {loading && !analyticsData ? (
-        <LoadingSkeleton rows={5} />
+        <LoadingSkeleton count={4} />
       ) : (
         <>
           {/* Key KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               title="Net Ticket Earnings"
-              value={`₹${metrics.netRevenue.toLocaleString()}`}
-              subtitle={`Gross: ₹${metrics.grossRevenue.toLocaleString()} | Refunds: ₹${metrics.totalRefunds.toLocaleString()}`}
+              value={`₹${metrics.netRevenue.toLocaleString('en-IN')}`}
+              subtitle={`Gross: ₹${metrics.grossRevenue.toLocaleString('en-IN')} | Refunds: ₹${metrics.totalRefunds.toLocaleString('en-IN')}`}
               icon={DollarSign}
-              variant="primary"
+              theme="red"
             />
             <StatCard
               title="Confirmed Passengers"
-              value={metrics.confirmedPassengers.toLocaleString()}
+              value={metrics.confirmedPassengers.toLocaleString('en-IN')}
               subtitle={`Across ${metrics.totalBookings} total bookings`}
               icon={Ticket}
+              theme="navy"
             />
             <StatCard
               title="Active Fleet"
               value={`${metrics.activeBuses} / ${metrics.totalBuses} Buses`}
               subtitle={`Serving ${metrics.totalRoutesServed} routes`}
               icon={Bus}
+              theme="emerald"
             />
             <StatCard
               title="Upcoming Trips"
               value={metrics.upcomingTrips.toString()}
               subtitle={`${metrics.completedTrips} Completed | ${metrics.cancelledTrips} Cancelled`}
               icon={Calendar}
+              theme="amber"
             />
           </div>
 
           {/* Visual Analytics Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200/90 shadow-xs">
+            <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
               <TrendLineChart
                 data={charts.bookingTrends}
                 xKey="_id"
                 yKey="bookings"
                 title="Booking Trends for Your Fleet"
                 height={220}
-                strokeColor="#2563eb"
-                fillColor="#93c5fd"
+                strokeColor="#D92D3A"
+                fillColor="#FEE4E2"
                 valueSuffix=" bookings"
               />
             </div>
@@ -230,9 +232,9 @@ export default function OperatorDashboardPage() {
                 ) : (
                   <div className="divide-y divide-slate-100">
                     {charts.popularRoutes.map((r, i) => (
-                      <div key={r._id || i} className="py-2 flex items-center justify-between text-xs">
-                        <span className="font-semibold text-slate-800">{r.routeName}</span>
-                        <span className="font-bold text-blue-600">{r.bookings} bookings</span>
+                      <div key={r._id || i} className="py-2.5 flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-800">{r.routeName}</span>
+                        <span className="font-mono font-bold text-primary">{r.bookings} bookings</span>
                       </div>
                     ))}
                   </div>
@@ -246,7 +248,7 @@ export default function OperatorDashboardPage() {
             title="Operational Activity Stream"
             subtitle="Latest bookings, upcoming trips, cancellations, and refunds"
             action={
-              <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+              <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
                 {[
                   { id: 'bookings', label: 'Recent Bookings' },
                   { id: 'trips', label: 'Upcoming Trips' },
@@ -256,10 +258,10 @@ export default function OperatorDashboardPage() {
                   <button
                     key={t.id}
                     onClick={() => setActivityTab(t.id)}
-                    className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                       activityTab === t.id
-                        ? 'bg-white text-slate-900 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-900'
+                        ? 'bg-white text-navy shadow-2xs'
+                        : 'text-slate-500 hover:text-navy'
                     }`}
                   >
                     {t.label}
@@ -277,7 +279,7 @@ export default function OperatorDashboardPage() {
                     <div key={b._id} className="py-3 flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-slate-800 text-xs">{b.pnr}</span>
+                          <span className="font-mono font-bold text-navy text-xs">{b.pnr}</span>
                           <StatusBadge status={b.bookingStatus} />
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">
@@ -285,7 +287,7 @@ export default function OperatorDashboardPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <span className="text-xs font-bold text-slate-900 block">₹{b.totalAmount}</span>
+                        <span className="text-xs font-black text-navy font-mono block">₹{b.totalAmount}</span>
                         <span className="text-[10px] text-slate-400">{new Date(b.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
@@ -302,22 +304,22 @@ export default function OperatorDashboardPage() {
                   {recentActivity.upcomingTrips.map((t) => (
                     <div key={t._id} className="py-3 flex items-center justify-between">
                       <div>
-                        <p className="text-xs font-bold text-slate-800">{t.routeId?.routeName}</p>
+                        <p className="text-xs font-bold text-navy">{t.routeId?.routeName}</p>
                         <p className="text-[10px] text-slate-400">
                           Bus: {t.busId?.busNumber} ({t.busId?.busType}) | Total Seats: {t.busId?.totalSeats}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <span className="text-xs font-semibold text-slate-700 block">
+                          <span className="text-xs font-bold text-slate-700 block">
                             {new Date(t.departureTime).toLocaleDateString()}
                           </span>
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-400 font-mono">
                             {new Date(t.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <Link to={`/operator/manifests/${t._id}`}>
-                          <Button variant="outline" size="sm" className="text-xs py-1 px-2.5">
+                          <Button variant="secondary" size="sm" className="text-xs py-1 px-2.5 font-bold">
                             Manifest
                           </Button>
                         </Link>
@@ -336,7 +338,7 @@ export default function OperatorDashboardPage() {
                   {recentActivity.recentCancellations.map((c) => (
                     <div key={c._id} className="py-3 flex items-center justify-between">
                       <div>
-                        <span className="font-mono font-bold text-slate-800 text-xs">
+                        <span className="font-mono font-bold text-navy text-xs">
                           PNR: {c.bookingId?.pnr || '—'}
                         </span>
                         <p className="text-xs text-slate-500 mt-0.5">
@@ -358,8 +360,8 @@ export default function OperatorDashboardPage() {
                   {recentActivity.recentRefunds.map((r) => (
                     <div key={r._id} className="py-3 flex items-center justify-between">
                       <div>
-                        <span className="font-mono font-bold text-slate-800 text-xs">{r.refundReference}</span>
-                        <p className="text-xs text-rose-600 font-semibold mt-0.5">₹{r.refundAmount}</p>
+                        <span className="font-mono font-bold text-navy text-xs">{r.refundReference}</span>
+                        <p className="text-xs text-rose-600 font-bold mt-0.5">₹{r.refundAmount}</p>
                       </div>
                       <div className="text-right">
                         <StatusBadge status={r.refundStatus} />
